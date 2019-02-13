@@ -1,9 +1,4 @@
-
-.idea/CSproject.iml
-.idea/encodings.xml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
-.idea/libraries/lib.xml
-out/production/CSproject/Main.class
+*.class
+*.iml
+*.xml
+*.kotlin_module
