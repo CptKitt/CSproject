@@ -2,3 +2,4 @@
 *.iml
 *.xml
 *.kotlin_module
+/bin/
