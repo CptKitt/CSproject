@@ -46,9 +46,11 @@ public class Position {
     
     @Override
     public boolean equals(Object obj) {
+        // can't be equal to non-position
         if (!(obj instanceof Position)) {
             return false;
         }
+        // cast and compare coordinates
         Position other = (Position) obj;
         return x == other.x && y == other.y;
     }

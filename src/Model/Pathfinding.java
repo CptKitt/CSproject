@@ -3,13 +3,13 @@ package Model;
 import java.util.*;
 
 /**
- * Abstract class containing static methods
- * for use in 2D grid pathfinding.
+ * Class containing static methods for use in 2D grid pathfinding.
+ * The class itself cannot be instantiated.
  * <p></p>
  * The pathfinding methods require a {@link Pathfinding.Delegate},
  * which provides information about the map.
  */
-public abstract class Pathfinding {
+public final class Pathfinding {
     
     /**
      * Interface for classes that use Pathfinding methods.
@@ -26,6 +26,9 @@ public abstract class Pathfinding {
          */
         boolean validPosition(Position p);
     }
+    
+    /** Disallow instantiation. */
+    private Pathfinding() { }
     
     /**
      * Given the starting position and the range of movement,
@@ -46,21 +49,21 @@ public abstract class Pathfinding {
         Map<Position, Integer> distances = new HashMap<>();
         frontier.add(new Position(start));
         distances.put(new Position(start), 0);
-    
+        
         // loop until frontier exhausted
         while (!frontier.isEmpty()) {
             // pop position off queue
             Position pos = frontier.removeLast();
-        
+            
             // add to positions
             positions.add(pos);
-        
+            
             // hit max distance
             int dist = distances.get(pos);
             if (dist == range) {
                 continue;
             }
-        
+            
             // loop through all adjacent positions
             for (Position newPos : pos.adjacentPositions()) {
                 // ignore invalid and already visited positions
@@ -73,7 +76,34 @@ public abstract class Pathfinding {
                 }
             }
         }
-    
+        
         return positions;
+    }
+    
+    /**
+     * Searches for the shortest path from one Position
+     * to another using A* pathfinding.
+     * @param delegate The pathfinding delegate.
+     * @param start The starting position.
+     * @param end The destination position.
+     * @return An ArrayList of positions to traverse, in order,
+     *         to get to the destination.
+     */
+    public static List<Position> shortestPath(
+            Delegate delegate, Position start, Position end) {
+        return new ArrayList<>();
+    }
+    
+    /**
+     * Checks whether there is line of sight between two positions.
+     * @param delegate The pathfinding delegate.
+     * @param p1 The first position.
+     * @param p2 The second position.
+     * @return True if there is an unobstructed line between
+     *         the two positions, or false otherwise.
+     */
+    public static boolean lineOfSight(
+            Delegate delegate, Position p1, Position p2) {
+        return false;
     }
 }
