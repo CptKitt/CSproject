@@ -27,6 +27,71 @@ public final class Pathfinding {
         boolean validPosition(Position p);
     }
     
+    /**
+     * Pathfinding-exclusive Position type containing additional
+     * information used in A* pathfinding.
+     * <p></p>
+     * Implementation of Comparable allows for use in a
+     * comparison-based priority queue, usually a TreeSet or TreeMap.
+     */
+    static private class PathPosition extends Position
+            implements Comparable<PathPosition> {
+        /**
+         * The cost taken to arrive at this Position, g(n).
+         */
+        private int cost;
+        
+        /**
+         * The distance to the destination, h(n).
+         */
+        private int distance;
+        
+        /**
+         * @return The overall priority of the PathPosition, g(n) + h(n).
+         */
+        int priority() {
+            return cost + distance;
+        }
+        
+        PathPosition(Position pos, int cost, int distance) {
+            super(pos);
+            this.cost = cost;
+            this.distance = distance;
+        }
+        
+        @Override
+        public String toString() {
+            return super.toString() + "[" + cost +
+                    ":" + distance + ":" + priority() + "]";
+        }
+        
+        // Methods required for use in Sets and Maps
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof PathPosition)) {
+                return false;
+            }
+            PathPosition other = (PathPosition) obj;
+            return cost == other.cost && distance == other.distance
+                    && super.equals(obj);
+        }
+        
+        @Override
+        public int hashCode() {
+            return (distance << 16) ^ cost ^ (super.hashCode() << 8);
+        }
+        
+        @Override
+        public int compareTo(PathPosition other) {
+            if (priority() < other.priority()) return -1;
+            if (priority() > other.priority()) return 1;
+            if (x < other.x) return -1;
+            if (x > other.x) return 1;
+            return Integer.compare(y, other.y);
+        }
+    }
+    
     /** Disallow instantiation. */
     private Pathfinding() { }
     
@@ -91,7 +156,65 @@ public final class Pathfinding {
      */
     public static List<Position> shortestPath(
             Delegate delegate, Position start, Position end) {
-        return new ArrayList<>();
+        // setup
+        TreeSet<PathPosition> frontier = new TreeSet<>();
+        Map<Position, PathPosition> history = new HashMap<>();
+        frontier.add(new PathPosition(start, 0, start.distanceTo(end)));
+        Position last = null;
+    
+        // populate until goal reached
+        while (!frontier.isEmpty()) {
+            PathPosition pos = frontier.pollFirst();
+        
+            // reached goal, finish
+            if (end.equals(pos)) {
+                last = new Position(pos);
+                break;
+            }
+        
+            // loop through adjacent positions
+            for (Position newPos : pos.adjacentPositions()) {
+                PathPosition newPathPos = new PathPosition(newPos,
+                        pos.cost + 1, newPos.distanceTo(end));
+                // ignore invalid positions and better paths
+                if (delegate.validPosition(newPathPos)
+                        && (!history.containsKey(newPos)
+                        || history.get(newPos).priority()
+                        > pos.priority())) {
+                    // add to backtracking and frontier
+                    history.put(newPos, pos);
+                    frontier.add(newPathPos);
+                }
+            }
+        }
+    
+        // didn't find path
+        if (last == null) {
+            // default to closest tile with lowest cost
+            /* TODO: The algorithm doesn't always find the
+                best route to the tile closest to the destination.
+                Maybe return shortestPath() again with the
+                closest tile as the destination, though
+                performance might be affected.
+             */
+            last = history.entrySet().stream().min((e1, e2) -> {
+                Position p1 = e1.getKey(), p2 = e2.getKey();
+                if (p1.distanceTo(end) < p2.distanceTo(end)) return -1;
+                if (p1.distanceTo(end) > p2.distanceTo(end)) return 1;
+                return Integer.compare(e1.getValue().cost, e2.getValue().cost);
+            }).map(e -> new Position(e.getKey())).orElse(start);
+        }
+    
+        // backtrack to find path
+        List<Position> path = new ArrayList<>();
+        while (!start.equals(last)) {
+            path.add(last);
+            last = new Position(history.get(last));
+        }
+    
+        // faster to append then reverse: O(2n)
+        Collections.reverse(path);
+        return path;
     }
     
     /**
