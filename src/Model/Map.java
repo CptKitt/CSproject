@@ -1,5 +1,5 @@
-import java.util.Random;
-import java.util.Scanner;
+package Model;
+import java.util.*;
 
 public class Map implements Pathfinding.Delegate {
 	private String[][] grid = new String[10][10];
@@ -54,6 +54,11 @@ public class Map implements Pathfinding.Delegate {
 		Map asdf = new Map();
 		asdf.populateGrid();
 		asdf.printGrid();
+
+		Set<Position> moves = Pathfinding.movementForPosition(asdf,asdf.getStart(),asdf.rand.nextInt(5));
+
+		System.out.println(moves);
+
 		while(!exit) {
 			String todo = in.nextLine();
 			if (todo == "exit") {
