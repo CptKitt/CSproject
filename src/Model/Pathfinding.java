@@ -25,26 +25,43 @@ public final class Pathfinding {
          * @return True if the position is passable, false otherwise.
          */
         boolean validPosition(Position p);
+    
+        /**
+         * Returns true if the position is see-through.
+         * This should return false if the position is out of bounds
+         * or there are solid objects obstructing vision.
+         * <p></p>
+         * By default, this method returns {@code validPosition()}.
+         * It may be overridden for cases where positions are
+         * not valid, but may still be seen through.
+         * @param p The position to check.
+         * @return True if the position is see-through, false otherwise.
+         */
+        default boolean transparentPosition(Position p) {
+            return validPosition(p);
+        }
     }
     
     /**
-     * Pathfinding-exclusive Position type containing additional
-     * information used in A* pathfinding.
+     * Pathfinding-exclusive Position wrapper class containing
+     * additional information used in A* pathfinding.
      * <p></p>
      * Implementation of Comparable allows for use in a
      * comparison-based priority queue, usually a TreeSet or TreeMap.
      */
-    static private class PathPosition extends Position
+    static private final class PathPosition
             implements Comparable<PathPosition> {
+        final Position position;
+        
         /**
          * The cost taken to arrive at this Position, g(n).
          */
-        private int cost;
+        int cost;
         
         /**
          * The distance to the destination, h(n).
          */
-        private int distance;
+        int distance;
         
         /**
          * @return The overall priority of the PathPosition, g(n) + h(n).
@@ -54,14 +71,14 @@ public final class Pathfinding {
         }
         
         PathPosition(Position pos, int cost, int distance) {
-            super(pos);
+            position = pos;
             this.cost = cost;
             this.distance = distance;
         }
         
         @Override
         public String toString() {
-            return super.toString() + "[" + cost +
+            return position.toString() + "[" + cost +
                     ":" + distance + ":" + priority() + "]";
         }
         
@@ -74,21 +91,19 @@ public final class Pathfinding {
             }
             PathPosition other = (PathPosition) obj;
             return cost == other.cost && distance == other.distance
-                    && super.equals(obj);
+                    && position.equals(other.position);
         }
         
         @Override
         public int hashCode() {
-            return (distance << 16) ^ cost ^ (super.hashCode() << 8);
+            return (distance << 8) ^ (cost << 4) ^ position.hashCode();
         }
         
         @Override
         public int compareTo(PathPosition other) {
             if (priority() < other.priority()) return -1;
             if (priority() > other.priority()) return 1;
-            if (x < other.x) return -1;
-            if (x > other.x) return 1;
-            return Integer.compare(y, other.y);
+            return position.compareTo(other.position);
         }
     }
     
@@ -112,8 +127,8 @@ public final class Pathfinding {
         Set<Position> positions = new HashSet<>();
         Deque<Position> frontier = new ArrayDeque<>();
         Map<Position, Integer> distances = new HashMap<>();
-        frontier.add(new Position(start));
-        distances.put(new Position(start), 0);
+        frontier.add(start);
+        distances.put(start, 0);
         
         // loop until frontier exhausted
         while (!frontier.isEmpty()) {
@@ -158,9 +173,8 @@ public final class Pathfinding {
             Delegate delegate, Position start, Position end) {
         // setup
         TreeSet<PathPosition> frontier = new TreeSet<>();
-        Map<Position, PathPosition> history = new HashMap<>();
+        HashMap<Position, PathPosition> history = new HashMap<>();
         frontier.add(new PathPosition(start, 0, start.distanceTo(end)));
-        Position last = null;
     
         // populate until goal reached
         while (!frontier.isEmpty()) {
@@ -168,16 +182,25 @@ public final class Pathfinding {
         
             // reached goal, finish
             if (end.equals(pos)) {
-                last = new Position(pos);
-                break;
+                // backtrack to find path
+                Position track = pos.position;
+                List<Position> path = new ArrayList<>();
+                while (!track.equals(start)) {
+                    path.add(track);
+                    track = history.get(track).position;
+                }
+            
+                // faster to append then reverse: O(2n)
+                Collections.reverse(path);
+                return path;
             }
         
             // loop through adjacent positions
-            for (Position newPos : pos.adjacentPositions()) {
+            for (Position newPos : pos.position.adjacentPositions()) {
                 PathPosition newPathPos = new PathPosition(newPos,
                         pos.cost + 1, newPos.distanceTo(end));
                 // ignore invalid positions and better paths
-                if (delegate.validPosition(newPathPos)
+                if (delegate.validPosition(newPos)
                         && (!history.containsKey(newPos)
                         || history.get(newPos).priority()
                         > pos.priority())) {
@@ -188,37 +211,27 @@ public final class Pathfinding {
             }
         }
     
-        // didn't find path
-        if (last == null) {
-            // default to closest tile with lowest cost
-            /* TODO: The algorithm doesn't always find the
-                best route to the tile closest to the destination.
-                Maybe return shortestPath() again with the
-                closest tile as the destination, though
-                performance might be affected.
-             */
-            last = history.entrySet().stream().min((e1, e2) -> {
-                Position p1 = e1.getKey(), p2 = e2.getKey();
-                if (p1.distanceTo(end) < p2.distanceTo(end)) return -1;
-                if (p1.distanceTo(end) > p2.distanceTo(end)) return 1;
-                return Integer.compare(e1.getValue().cost, e2.getValue().cost);
-            }).map(e -> new Position(e.getKey())).orElse(start);
+        // frontier exhausted and didn't find path
+        // find tile closest to destination
+        Position closest = start;
+        int lowestCost = 0;
+        for (Map.Entry<Position, PathPosition> e : history.entrySet()) {
+            if (e.getKey().distanceTo(end) < closest.distanceTo(end)
+                    || e.getValue().cost < lowestCost) {
+                closest = e.getKey();
+                lowestCost = e.getValue().cost;
+            }
         }
     
-        // backtrack to find path
-        List<Position> path = new ArrayList<>();
-        while (!start.equals(last)) {
-            path.add(last);
-            last = new Position(history.get(last));
-        }
-    
-        // faster to append then reverse: O(2n)
-        Collections.reverse(path);
-        return path;
+        // reroute: will only recurse once at maximum
+        return shortestPath(delegate, start, closest);
     }
     
     /**
      * Checks whether there is line of sight between two positions.
+     * <p></p>
+     * This method does not take range into account, and will
+     * return true if line of sight exists no matter the distance.
      * @param delegate The pathfinding delegate.
      * @param p1 The first position.
      * @param p2 The second position.
@@ -227,6 +240,19 @@ public final class Pathfinding {
      */
     public static boolean lineOfSight(
             Delegate delegate, Position p1, Position p2) {
-        return false;
+        return visibility(delegate, p1, -1).contains(p2);
+    }
+    
+    /**
+     * Calculates all the positions visible to the position.
+     * @param delegate The pathfinding delegate.
+     * @param p The origin to check from.
+     * @param range The maximum range to check.
+     *              If <= 0, will allow unlimited range.
+     * @return A Set of positions visible from the origin.
+     */
+    public static Set<Position> visibility(
+            Delegate delegate, Position p, int range) {
+        return new HashSet<>();
     }
 }
