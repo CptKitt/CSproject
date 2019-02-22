@@ -51,17 +51,20 @@ public final class Pathfinding {
      */
     static private final class PathPosition
             implements Comparable<PathPosition> {
+        /**
+         * The held position.
+         */
         final Position position;
         
         /**
          * The cost taken to arrive at this Position, g(n).
          */
-        int cost;
+        final int cost;
         
         /**
          * The distance to the destination, h(n).
          */
-        int distance;
+        final int distance;
         
         /**
          * @return The overall priority of the PathPosition, g(n) + h(n).
@@ -181,7 +184,7 @@ public final class Pathfinding {
             PathPosition pos = frontier.pollFirst();
         
             // reached goal, finish
-            if (end.equals(pos)) {
+            if (end.equals(pos.position)) {
                 // backtrack to find path
                 Position track = pos.position;
                 List<Position> path = new ArrayList<>();
