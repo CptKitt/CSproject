@@ -232,6 +232,10 @@ public final class Pathfinding {
      * <p></p>
      * This method does not take range into account, and will
      * return true if line of sight exists no matter the distance.
+     * <p></p>
+     * For frequent line of sight checks, consider caching the
+     * results of the {@code visibility} function and simply checking
+     * whether the returned Set contains the destination.
      * @param delegate The pathfinding delegate.
      * @param p1 The first position.
      * @param p2 The second position.
@@ -253,6 +257,100 @@ public final class Pathfinding {
      */
     public static Set<Position> visibility(
             Delegate delegate, Position p, int range) {
-        return new HashSet<>();
+        Set<Position> positions = new HashSet<>();
+        positions.add(new Position(p));
+        
+        // shadow cast for each octant
+        for (int i = 0; i < 8; i++) {
+            shadowCast(delegate, positions, i, p, range, 1,
+                    new Position(1, 1), new Position(1, 0));
+        }
+    
+        return positions;
+    }
+    
+    /**
+     * Calculates shadow casting in a given octant.
+     * Note that walls are included in the calculations,
+     * and will be considered visible if in range.
+     * @param delegate The pathfinding delegate.
+     * @param positions A Set of positions to add to.
+     * @param octant The octant to search in.
+     * @param p The origin position.
+     * @param range The maximum range to allow searching.
+     *              If negative, allows unlimited range.
+     * @param x The offset to begin search.
+     * @param top The upper Slope.
+     * @param bot The lower Slope.
+     */
+    private static void shadowCast(
+            Delegate delegate, Set<Position> positions, int octant,
+            Position p, int range, int x, Position top, Position bot) {
+        for (; x <= range || range < 0; x++) {
+            // calculate enter and exit vectors
+            int topY = top.x == 1 ? 1
+                    : ((x * 2 + 1) * top.y + top.x - 1) / (top.x * 2);
+            int botY = bot.y == 0 ? 0
+                    : ((x * 2 - 1) * bot.y + bot.x) / (bot.x * 2);
+            
+            // begin search
+            boolean wasOpaque = true;
+            for (int y = topY; y >= botY; y--) {
+                // apply offset to origin
+                int tx = p.x, ty = p.y;
+                switch(octant) {
+                    case 0: tx += x; ty -= y; break;
+                    case 1: tx += y; ty -= x; break;
+                    case 2: tx -= y; ty -= x; break;
+                    case 3: tx -= x; ty -= y; break;
+                    case 4: tx -= x; ty += y; break;
+                    case 5: tx -= y; ty += x; break;
+                    case 6: tx += y; ty += x; break;
+                    case 7: tx += x; ty += y; break;
+                }
+                
+                // add to positions if in range
+                Position newPos = new Position(tx, ty);
+                boolean inRange = range <= 0 ||
+                        p.distanceTo(newPos) <= range;
+                if (inRange) {
+                    positions.add(newPos);
+                }
+                
+                // check opacity with delegate
+                boolean isOpaque = !inRange
+                        || !delegate.transparentPosition(newPos);
+                if (x != range) {
+                    // hit opaque wall
+                    if (isOpaque) {
+                        // went from clear to opaque, adjust bottom
+                        if (!wasOpaque) {
+                            Position s = new Position(x * 2 - 1, y * 2 + 1);
+                            // if completely blocked, move bottom vector up
+                            if (!inRange || y == botY) {
+                                bot = s;
+                                break;
+                            }
+                            // else recurse for newly created section
+                            shadowCast(delegate, positions, octant,
+                                    p, range, x+1, top, s);
+                        }
+                        wasOpaque = true;
+                    }
+                    else {
+                        // hit object, move top vector down
+                        if (wasOpaque) {
+                            top = new Position(x * 2 + 1, y * 2 + 1);
+                        }
+                        wasOpaque = false;
+                    }
+                }
+            }
+            
+            // end at wall
+            if (wasOpaque) {
+                break;
+            }
+        }
     }
 }
