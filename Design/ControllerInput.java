@@ -1,12 +1,24 @@
+/**
+*
+*/
+
 import java.util.Scanner;
 
 public class ControllerInput {
 	private Scanner firstIn;
+	private Map mapPieces;
 
-	public void setFirstIn(Scanner input) {
-		this.firstIn = input;
+	/**
+	*
+	*/
+	public void activeCharMovement() {
+
 	}
-	public Scanner getFirstIn() {
-		return firstIn;
+
+	/**
+	*
+	*/
+	public void activeCharAttack() {
+
 	}
 }
