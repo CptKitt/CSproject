@@ -10,7 +10,7 @@ public class ControllerInput {
 	/**
 	 *
 	 */
-	public int[] activeCharMovement() {
+	public int[] charMovementInput() {
 		int[] movementInput = new int[2];
 		Scanner userInput = new Scanner(System.in);
 		System.out.println("Please enter a position for the character to move to as an ordered pair (e.g. x,y):");
@@ -29,7 +29,7 @@ public class ControllerInput {
 	/**
 	 *
 	 */
-	public boolean wrongInput() {
+	public boolean wrongInput(String input) {
 		return false;
 	}
 
