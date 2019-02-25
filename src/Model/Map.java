@@ -2,10 +2,17 @@ package Model;
 import java.util.*;
 
 public class Map implements Pathfinding.Delegate {
-	private String[][] grid = new String[10][10];
+	private String[][] grid;
 	Random rand = new Random();
 
 	private Position start = new Position(rand.nextInt(10),rand.nextInt(10));
+
+	public Map() {
+		grid = new String[10][10];
+	}
+	public Map(int x,int y) {
+		grid = new String[x][y]
+	}
 
 	public Position getStart() {
 		return start;
