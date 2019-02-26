@@ -43,7 +43,7 @@ public abstract class Pathfinding {
         // prep for search
         Set<Position> positions = new HashSet<>();
         Deque<Position> frontier = new ArrayDeque<>();
-        Map<Position, Integer> distances = new HashMap<>();
+        HashMap<Position, Integer> distances = new HashMap<>();
         frontier.add(new Position(start));
         distances.put(new Position(start), 0);
     
