@@ -129,7 +129,7 @@ public final class Pathfinding {
         // prep for search
         Set<Position> positions = new HashSet<>();
         Deque<Position> frontier = new ArrayDeque<>();
-        Map<Position, Integer> distances = new HashMap<>();
+        HashMap<Position, Integer> distances = new HashMap<>();
         frontier.add(start);
         distances.put(start, 0);
         
@@ -218,7 +218,7 @@ public final class Pathfinding {
         // find tile closest to destination
         Position closest = start;
         int lowestCost = 0;
-        for (Map.Entry<Position, PathPosition> e : history.entrySet()) {
+        for (HashMap.Entry<Position, PathPosition> e : history.entrySet()) {
             if (e.getKey().distanceTo(end) < closest.distanceTo(end)
                     || e.getValue().cost < lowestCost) {
                 closest = e.getKey();
