@@ -60,7 +60,7 @@ public class Map implements Pathfinding.Delegate {
 	}
 
 	public void pathfind() {
-		Set<Position> moves = Pathfinding.movementForPosition(this,start,rand.nextInt(5));
+		Set<Position> moves = Pathfinding.movementForPosition(this,start,rand.nextInt(4)+2);
 
 		for(Position p : moves) {
 			if(p.x == start.x && p.y == start.y) {
