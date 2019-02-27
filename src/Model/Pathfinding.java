@@ -218,7 +218,7 @@ public final class Pathfinding {
         // find tile closest to destination
         Position closest = start;
         int lowestCost = 0;
-        for (Map.Entry<Position, PathPosition> e : history.entrySet()) {
+        for (HashMap.Entry<Position, PathPosition> e : history.entrySet()) {
             if (e.getKey().distanceTo(end) < closest.distanceTo(end)
                     || e.getValue().cost < lowestCost) {
                 closest = e.getKey();

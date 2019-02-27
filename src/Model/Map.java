@@ -11,15 +11,21 @@ public class Map implements Pathfinding.Delegate {
 		grid = new String[10][10];
 	}
 	public Map(int x,int y) {
-		grid = new String[x][y]
+		grid = new String[x][y];
 	}
 
 	public Position getStart() {
 		return start;
 	}
+	
+	public void setStart(Position start) {
+		this.start = start;
+	}
+	
 	public void newStart() {
-		start.x = rand.nextInt(10);
-		start.y = rand.nextInt(10);
+		start = new Position(
+				rand.nextInt(10),
+				rand.nextInt(10));
 	}
 
 	public void populateGrid() {
