@@ -2,9 +2,14 @@ package Model;
 
 /**
  * Represents an integer point on a 2D grid.
+ * <p></p>
+ * Because the class and its instance variables are final,
+ * the Position's coordinates will not change once instantiated,
+ * preventing the possibility of privacy leaks.
  */
-public class Position {
-    public int x, y;
+public final class Position implements Comparable<Position> {
+    
+    public final int x, y;
     
     /**
      * Creates a new Position.
@@ -33,6 +38,16 @@ public class Position {
     }
     
     /**
+     * Returns a new Position offset from this Position.
+     * @param x The x-offset of the new Position.
+     * @param y The y-offset of the new Position.
+     * @return A new Position relative to this Position.
+     */
+    public Position moved(int x, int y) {
+        return new Position(this.x + x, this.y + y);
+    }
+    
+    /**
      * @return The four Positions adjacent to this Position.
      */
     public Position[] adjacentPositions() {
@@ -46,9 +61,11 @@ public class Position {
     
     @Override
     public boolean equals(Object obj) {
+        // can't be equal to non-position
         if (!(obj instanceof Position)) {
             return false;
         }
+        // cast and compare coordinates
         Position other = (Position) obj;
         return x == other.x && y == other.y;
     }
@@ -62,5 +79,26 @@ public class Position {
     public String toString() {
         return "P(" + x + "," + y + ")";
     }
+    
+    /**
+     * @param o The position to compare against.
+     * @return An x and y comparison of the Positions.
+     */
+    @Override
+    public int compareTo(Position o) {
+        if (x < o.x) return -1;
+        if (x > o.x) return 1;
+        return Integer.compare(y, o.y);
+    }
+    
+    /**
+     * A Position representing no position.
+     */
+    public static final Position NONE = new Position(-1, -1);
+    
+    /**
+     * The origin Position, (0, 0).
+     */
+    public static final Position ORIGIN = new Position(0, 0);
 }
 
