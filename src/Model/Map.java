@@ -11,15 +11,24 @@ public class Map implements Pathfinding.Delegate {
 		grid = new String[10][10];
 	}
 	public Map(int x,int y) {
-		grid = new String[x][y]
+		grid = new String[x][y];
 	}
 
 	public Position getStart() {
 		return start;
 	}
+	
+	public void setStart(Position start) {
+		for (int i=0;i<grid.length;i++)
+			for (int j=0;j<grid[i].length;j++)
+				grid[i][j] = grid[i][j] == "#" ? "#" : ".";
+		this.start = start;
+	}
+	
 	public void newStart() {
-		start.x = rand.nextInt(10);
-		start.y = rand.nextInt(10);
+		start = new Position(
+				rand.nextInt(10),
+				rand.nextInt(10));
 	}
 
 	public void populateGrid() {
@@ -42,16 +51,16 @@ public class Map implements Pathfinding.Delegate {
 	}
 
 	public void printGrid() {
-		for(int i=0;i<grid.length;i++) {
-			for(int j=0;j<grid[i].length;j++) {
-				System.out.print(grid[i][j]);
+		for(int i=0;i<grid[0].length;i++) {
+			for(int j=0;j<grid.length;j++) {
+				System.out.print(grid[j][i]);
 			}
 			System.out.print("\n");
 		}
 	}
 
 	public void pathfind() {
-		Set<Position> moves = Pathfinding.movementForPosition(this,start,rand.nextInt(5));
+		Set<Position> moves = Pathfinding.movementForPosition(this,start,rand.nextInt(4)+2);
 
 		for(Position p : moves) {
 			if(p.x == start.x && p.y == start.y) {

@@ -1,4 +1,4 @@
-/**
+package Model; /**
 *
 */
 
@@ -17,10 +17,10 @@ public class ControllerInput {
 		String input = userInput.nextLine();
 		while (input.length() != 3) {
 			System.out.println("Please include the comma \",\" inbetween your x and y values");
-			String input = userInput.nextLine();
+			input = userInput.nextLine();
 		}
-		int xCoord = Integer.parseInt(input.charAt(0));
-		int yCoord = Integer.parseInt(input.charAt(2));
+		int xCoord = Integer.parseInt(String.valueOf(input.charAt(0)));
+		int yCoord = Integer.parseInt(String.valueOf(input.charAt(2)));
 		movementInput[0] = xCoord;
 		movementInput[1] = yCoord;
 		return movementInput;
