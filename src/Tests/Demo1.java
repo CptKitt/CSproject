@@ -2,6 +2,12 @@ package Tests;
 
 import Model.*;
 
+/**
+ * Short demonstration of the relationships between
+ * Map, Pathfinding, and ControllerInput.
+ *
+ *
+ */
 public class Demo1 {
     public static void main(String[] args) {
         Map m = new Map();
@@ -15,7 +21,6 @@ public class Demo1 {
             
             int[] move = input.charMovementInput();
             
-            m.populateGrid();
             m.setStart(new Position(move[0], move[1]));
         }
     }
