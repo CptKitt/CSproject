@@ -1,17 +1,17 @@
-package Text; /**
-*
-*/
+package Text; 
 
+import Model.Position;
 import java.util.Scanner;
 
-public class ControllerInput {
+/**
+*
+*/
+public class UserInput {
 	
-
 	/**
 	 *
 	 */
-	public int[] charMovementInput() {
-		int[] movementInput = new int[2];
+	public Position movementInput() {
 		Scanner userInput = new Scanner(System.in);
 		System.out.println("Please enter a position to move a character as an ordered pair, with a comma inbetween (e.g. x,y):");
 		String input = userInput.nextLine();
@@ -21,16 +21,16 @@ public class ControllerInput {
 		}
 		int xCoord = Integer.parseInt(String.valueOf(input.charAt(0)));
 		int yCoord = Integer.parseInt(String.valueOf(input.charAt(2)));
-		movementInput[0] = xCoord;
-		movementInput[1] = yCoord;
-		return movementInput;
+		Position inputPos = new Position(xCoord, yCoord);
+		return inputPos;
 	}
 
 	/**
-	 *
-	 */
-	public boolean wrongInput(String input) {
-		return false;
+	*This main method is used for testing the compilation and functionality of methods within this class
+	*/
+	public static void main(String[] args) {
+		UserInput input = new UserInput();
+		Position test = new Position(input.movementInput());
+		System.out.println(test);
 	}
-
 }
