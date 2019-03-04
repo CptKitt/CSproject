@@ -5,6 +5,7 @@ import java.util.Set;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -18,9 +19,13 @@ public class GUIMain extends Application {
 	private Input input;
 	private Scene scene;
 	private Group root;
+	private Canvas canvas;
 
 	private Position selectedPosition = null;
 	private Set<Position> possibleActions = null;
+	
+	public final int WIDTH = 720;
+	public final int HEIGHT = 480;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -33,14 +38,15 @@ public class GUIMain extends Application {
 		map.populateGrid();
 
 		// javafx setup
-		root = new Group();
-		scene = new Scene(root, 720, 480);
+		canvas = new Canvas(WIDTH, HEIGHT);
+		root = new Group(canvas);
+		scene = new Scene(root, WIDTH, HEIGHT);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
 		// display once
-		display.drawMapOnScene(map, root);
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 
 		// show application
 		primaryStage.setScene(scene);
@@ -87,6 +93,6 @@ public class GUIMain extends Application {
 
 		// clear and update display
 		root.getChildren().clear();
-		display.drawMapOnScene(map, root);
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 	}
 }
