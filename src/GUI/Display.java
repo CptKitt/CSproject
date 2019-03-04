@@ -4,13 +4,14 @@ import Model.Map;
 import javafx.scene.Group;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import java.io.File;
 
 public class Display {
 	public void drawMapOnScene(Map m, GraphicsContext g) {
 		String[][] grid = m.getGrid();
-		Image floor = new Image("file:///C:/Users/Kitt/Desktop/Programming/CPSC233/Project/assets/tile1.png",32,32,true,false);
-		Image wall = new Image("file:///C:/Users/Kitt/Desktop/Programming/CPSC233/Project/assets/wall2.png",32,32,true,false);
-		Image space = new Image("file:///C:/Users/Kitt/Desktop/Programming/CPSC233/Project/assets/wall3.png",32,32,true,false);
+		Image floor = new Image("GUI\\assets\\tile1.png",32,32,true,false);
+		Image wall = new Image("GUI\\assets\\wall2.png",32,32,true,false);
+		Image space = new Image("GUI\\assets\\wall3.png",32,32,true,false);
 
 		double size = 32d;
 
