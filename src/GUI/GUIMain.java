@@ -6,6 +6,8 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.canvas.Canvas;
 
 /**
  * JavaFX application representing the GUI
@@ -17,6 +19,8 @@ public class GUIMain extends Application {
 	private Input input;
 	private Scene scene;
 	private Group root;
+	private Canvas canvas = new Canvas(400,400);
+	private GraphicsContext gc = canvas.getGraphicsContext2D();
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -30,13 +34,17 @@ public class GUIMain extends Application {
 
 		// javafx setup
 		root = new Group();
+
+		// display once
+		display.drawMapOnScene(map, gc);
+
+		root.getChildren().add(canvas);
 		scene = new Scene(root, 720, 480);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
-		// display once
-		display.drawMapOnScene(map, root);
+
 
 		// show application
 		primaryStage.setScene(scene);
@@ -66,7 +74,7 @@ public class GUIMain extends Application {
 
 		// clear and update display
 		root.getChildren().clear();
-		display.drawMapOnScene(map, root);
+		display.drawMapOnScene(map,gc);
 	}
 
 	public boolean validInput(String s) {
