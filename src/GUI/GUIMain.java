@@ -1,9 +1,11 @@
 package GUI;
 
 import Model.*;
+import java.util.Set;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -17,7 +19,14 @@ public class GUIMain extends Application {
 	private Input input;
 	private Scene scene;
 	private Group root;
+	private Canvas canvas;
 
+	private Position selectedPosition = null;
+	private Set<Position> possibleActions = null;
+	
+	public final int WIDTH = 720;
+	public final int HEIGHT = 480;
+	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// create i/o objects
@@ -29,14 +38,15 @@ public class GUIMain extends Application {
 		map.populateGrid();
 
 		// javafx setup
-		root = new Group();
-		scene = new Scene(root, 720, 480);
+		canvas = new Canvas(WIDTH, HEIGHT);
+		root = new Group(canvas);
+		scene = new Scene(root, WIDTH, HEIGHT);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
 		// display once
-		display.drawMapOnScene(map, root);
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 
 		// show application
 		primaryStage.setScene(scene);
@@ -60,16 +70,29 @@ public class GUIMain extends Application {
 		// delegate input handling
 		Position p = input.handleClick(e);
 
-		// TODO: send input to map and remove debug line
-		System.out.println("click at x:" + e.getSceneX()
+		// first click
+		if (selectedPosition == null) {
+			Set<Position> moves = map.possibleMovesForCharacter(p);
+			
+			// select character if possible moves exist
+			if (!moves.isEmpty()) {
+				selectedPosition = p;
+				possibleActions = moves;
+			}
+		}
+		// second click: try performing action
+		else {
+			map.processAction(selectedPosition, p);
+			selectedPosition = null;
+			possibleActions = null;
+		}
+		
+		// TODO: remove debug line, send possibleActions to Display
+		System.out.println("clicked x:" + e.getSceneX()
 				+ ", y:" + e.getSceneY());
 
 		// clear and update display
 		root.getChildren().clear();
-		display.drawMapOnScene(map, root);
-	}
-
-	public boolean validInput(String s) {
-		return false;
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 	}
 }
