@@ -11,7 +11,8 @@ public class UserInput {
 	/**
 	 *This method asks the User for a position on the map displayed in the
 	 *Interactive Text-Based version in the form: x,y.
-	 *Has no parameters, Returns a Position Object.
+	 *@param no parameters
+	 *@return a Position object containing coordinate information on where the user wants a character to move
 	 */
 	public Position movementInput() {
 		Scanner userInput = new Scanner(System.in);
