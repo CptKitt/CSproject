@@ -9,7 +9,7 @@ import Model.*;
 *
 */
 public class TextMain {
-	private Map map;
+	static private Map map;
 
 	public boolean validInput(String input) {
 		return false;
@@ -26,8 +26,8 @@ public class TextMain {
 		while (true) {
 			map.pathfind();
 			display.printGrid();
-			int[] move = input.movementInput();
-			map.setStart(new Position(move[0], move[1]));
+			Position move = input.movementInput();
+			map.setStart(new Position(move));
 		}
 	}
 }
