@@ -8,6 +8,7 @@ public class Map implements Pathfinding.Delegate {
 	private String[][] grid;
 	Random rand = new Random();
 	private Entity[][] entities;
+	private double[][] visibility;
 	private Position start;
 
 	public Map() {
@@ -17,6 +18,14 @@ public class Map implements Pathfinding.Delegate {
 	public Map(int x, int y) {
 		grid = new String[x][y];
 		entities = new Entity[x][y];
+		visibility = new double[x][y];
+		
+		for (x = 0; x < getWidth(); x++) {
+			for (y = 0; y < getHeight(); y++) {
+				visibility[x][y] = 0;
+			}
+		}
+		
 		newStart();
 		populateGrid();
 	}
@@ -39,6 +48,9 @@ public class Map implements Pathfinding.Delegate {
 				rand.nextInt(getHeight()));
 	}
 	
+	/**
+	 * @return A copy of the entities represented by this Map.
+	 */
 	public Entity[][] getGrid() {
 		Entity[][] copy = new Entity[getWidth()][getHeight()];
 		for (int x = 0; x < getWidth(); x++) {
@@ -47,7 +59,37 @@ public class Map implements Pathfinding.Delegate {
 				copy[x][y] = entities[x][y];
 			}
 		}
-		return entities;
+		return copy;
+	}
+	
+	/**
+	 * @return A copy of the visibility of this Map.
+	 */
+	public double[][] getVisibility() {
+		double[][] copy = new double[getWidth()][getHeight()];
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
+				copy[x][y] = visibility[x][y];
+			}
+		}
+		return copy;
+	}
+	
+	/** Updates visibility for the whole Map. */
+	public void updateVisibility() {
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
+				Entity e = entities[x][y];
+				if (e == null || !(e instanceof Player)) {
+					continue;
+				}
+				Position pos = new Position(x, y);
+				for (Position p : Pathfinding.visibility(this, pos, 5)) {
+					double opacity = 1.0 / Math.max(pos.distanceTo(p), 1);
+					visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
+				}
+			}
+		}
 	}
     
     /**
@@ -62,9 +104,7 @@ public class Map implements Pathfinding.Delegate {
         }
 	}
     
-    /**
-     * Generates walls randomly.
-     */
+    /** Generates walls randomly. */
 	public void generateRandom() {
         for (int i = 0; i < getWidth(); i++) {
             for (int j = 0; j < getHeight(); j++) {
