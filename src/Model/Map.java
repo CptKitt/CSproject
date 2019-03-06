@@ -33,14 +33,6 @@ public class Map implements Pathfinding.Delegate {
 		this.start = start;
 	}
 
-	public String[][] getGrid() {
-		String[][] toReturn = new String[grid.length][grid[0].length];
-		for(int i=0;i<toReturn.length;i++) {
-			toReturn[i] = grid[i];
-		}
-		return toReturn;
-	}
-
 	public void newStart() {
 		start = new Position(
 				rand.nextInt(getWidth()),
