@@ -22,7 +22,6 @@ public class GUIMain extends Application {
 	private Canvas canvas;
 
 	private Position selectedPosition = null;
-	private Set<Position> possibleActions = null;
 	
 	public final int WIDTH = 720;
 	public final int HEIGHT = 480;
