@@ -1,6 +1,5 @@
 package GUI;
 
-<<<<<<< HEAD
 import Model.*;
 import javafx.scene.Group;
 import javafx.scene.canvas.GraphicsContext;
@@ -33,13 +32,5 @@ public class Display {
 				}
 			}
 		}
-=======
-import Model.Map;
-import javafx.scene.canvas.GraphicsContext;
-
-public class Display {
-	public void drawMapOnScene(Map m, GraphicsContext g) {
-		
->>>>>>> master
 	}
 }
