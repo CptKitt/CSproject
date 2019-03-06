@@ -1,4 +1,6 @@
 package Model;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class Map implements Pathfinding.Delegate {
@@ -51,12 +53,15 @@ public class Map implements Pathfinding.Delegate {
 				String tile;
 				if (i == start.x && j == start.y) {
 					tile = "x";
+					entities[i][j] = new Player(0, 0, 0, 0, 0, new Position(i, j), 0, 0);
 				}
 				else if (tileChance == 0 || tileChance == 1) {
 					tile = ".";
+					entities[i][j] = new Entity(0, 0, 0, 0, 0, new Position(i, j), 0);
 				}
 				else {
 					tile = "#";
+					entities[i][j] = null;
 				}
 				grid[i][j] = tile;
 			}
@@ -124,6 +129,48 @@ public class Map implements Pathfinding.Delegate {
 		
 		// action successfully completed
 		return true;
+	}
+	
+	/**
+	 * @param path The path of the file to read from.
+	 */
+	public void readMapFromFile(String path) {
+		try {
+			Scanner in = new Scanner(new File(path));
+			List<String> lines = new ArrayList<>();
+			while (in.hasNextLine()) {
+				lines.add(in.nextLine());
+			}
+			in.close();
+			
+			if (lines.isEmpty()) {
+				return;
+			}
+			
+			int width = lines.get(0).length();
+			int height = lines.size();
+			
+			grid = new String[width][height];
+			entities = new Entity[width][height];
+			
+			for (int y = 0; y < height; y++) {
+				String line = lines.get(y);
+				for (int x = 0; x < width; x++) {
+					switch (line.charAt(x)) {
+						case ' ': // empty space
+							break;
+						case 'W': // wall
+							entities[x][y] = new Entity(0, 0, 0, 0, 0, new Position(x, y), 0);
+							break;
+						case 'C': // character?
+							break;
+					}
+				}
+			}
+		}
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void pathfind() {
