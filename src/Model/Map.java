@@ -1,4 +1,5 @@
 package Model;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -7,38 +8,41 @@ public class Map implements Pathfinding.Delegate {
 	private String[][] grid;
 	Random rand = new Random();
 	private Entity[][] entities;
-	private Position start = new Position(rand.nextInt(10),rand.nextInt(10));
+	private Position start;
 
 	public Map() {
 		this(10, 10);
 	}
 	
-	public Map(int x,int y) {
+	public Map(int x, int y) {
 		grid = new String[x][y];
 		entities = new Entity[x][y];
+		newStart();
+		populateGrid();
 	}
 
+	// TODO: remove start methods
 	public Position getStart() {
 		return start;
 	}
 	
 	public void setStart(Position start) {
-		for (int i=0;i<grid.length;i++)
-			for (int j=0;j<grid[i].length;j++)
+		for (int i = 0; i < getWidth(); i++)
+			for (int j = 0; j < getHeight(); j++)
 				grid[i][j] = grid[i][j] == "#" ? "#" : ".";
 		this.start = start;
 	}
 	
 	public void newStart() {
 		start = new Position(
-				rand.nextInt(10),
-				rand.nextInt(10));
+				rand.nextInt(getWidth()),
+				rand.nextInt(getHeight()));
 	}
 	
 	public Entity[][] getGrid() {
-		Entity[][] copy = new Entity[entities.length][entities[0].length];
-		for (int x = 0; x < entities.length; x++) {
-			for (int y = 0; y < entities[x].length; y++) {
+		Entity[][] copy = new Entity[getWidth()][getHeight()];
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
 				// TODO: create a new entity rather than copy reference
 				copy[x][y] = entities[x][y];
 			}
@@ -47,17 +51,21 @@ public class Map implements Pathfinding.Delegate {
 	}
 
 	public void populateGrid() {
-		for (int i=0;i<grid.length;i++) {
-			for (int j=0;j<grid[i].length;j++) {
+		for (int i = 0; i < getWidth(); i++) {
+			for (int j = 0; j < getHeight(); j++) {
 				int tileChance = rand.nextInt(3);
 				String tile;
 				if (i == start.x && j == start.y) {
 					tile = "x";
-					entities[i][j] = new Player(0, 0, 0, 0, 0, new Position(i, j), 0, 0);
+					entities[i][j] = new Player(
+					        0, 0, 0, 0, 0,
+                            new Position(i, j), 0, 0);
 				}
 				else if (tileChance == 0 || tileChance == 1) {
 					tile = ".";
-					entities[i][j] = new Entity(0, 0, 0, 0, 0, new Position(i, j), 0);
+					entities[i][j] = new Entity(
+					        0, 0, 0, 0, 0,
+                            new Position(i, j), 0);
 				}
 				else {
 					tile = "#";
@@ -68,9 +76,10 @@ public class Map implements Pathfinding.Delegate {
 		}
 	}
 
+	// TODO: Delete in favor of Display.
 	public void printGrid() {
-		for(int i=0;i<grid[0].length;i++) {
-			for(int j=0;j<grid.length;j++) {
+		for(int i = 0; i < getHeight(); i++) {
+			for(int j = 0; j < getWidth(); j++) {
 				System.out.print(grid[j][i]);
 			}
 			System.out.print("\n");
@@ -172,9 +181,24 @@ public class Map implements Pathfinding.Delegate {
 			e.printStackTrace();
 		}
 	}
+    
+    /**
+     * @return The width, x-length of the map.
+     */
+	public int getWidth() {
+	    return entities.length;
+    }
+    
+    /**
+     * @return The height, y-length of the map.
+     */
+    public int getHeight() {
+	    return entities.length == 0 ? 0 : entities[0].length;
+    }
 
 	public void pathfind() {
-		Set<Position> moves = Pathfinding.movementForPosition(this,start,rand.nextInt(4)+2);
+		Set<Position> moves = Pathfinding.movementForPosition(
+		        this, start,rand.nextInt(4)+2);
 
 		for(Position p : moves) {
 			if(p.x == start.x && p.y == start.y) {
