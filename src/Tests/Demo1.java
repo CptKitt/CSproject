@@ -1,6 +1,7 @@
 package Tests;
 
 import Model.*;
+import Text.*;
 
 /**
  * Short demonstration of the relationships between

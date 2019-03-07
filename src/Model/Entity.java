@@ -1,6 +1,6 @@
 package Model;
 
-public class Entity {
+public class Entity {	
 	public double HP;
 	public double ATK;
 	public double DEF;
