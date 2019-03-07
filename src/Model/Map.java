@@ -156,6 +156,8 @@ public class Map implements Pathfinding.Delegate {
 		      }
 		   }
 		}
+	
+	    placePlayer();
     }
     
     /**
@@ -214,6 +216,8 @@ public class Map implements Pathfinding.Delegate {
 		    	entities[p.x][p.y] = null;
 		    }
 	    }
+		
+		placePlayer();
     }
     
     /**
@@ -281,6 +285,8 @@ public class Map implements Pathfinding.Delegate {
 	        // chance to continue cave
 		    probability -= 30;
         } while (rand.nextInt(100) < probability);
+	    
+	    placePlayer();
     }
 	
 	/** Convenience function to fill the map with walls. */
@@ -291,6 +297,17 @@ public class Map implements Pathfinding.Delegate {
 			    entities[x][y] = newWall(new Position(x, y));
 		    }
 	    }
+    }
+	
+	/** Temporary convenience function to place the character. */
+    private void placePlayer() {
+    	Position p;
+    	do {
+    		p = new Position(
+    				rand.nextInt(getWidth()),
+				    rand.nextInt(getHeight()));
+	    } while (entities[p.x][p.y] != null);
+    	entities[p.x][p.y] = newPlayer(p);
     }
 
 	// TODO: Delete in favor of Display.
@@ -326,8 +343,12 @@ public class Map implements Pathfinding.Delegate {
 	 * @return Whether the action was valid or not.
 	 */
 	public boolean processAction(Position p1, Position p2) {
+		// destination is the entity, ignore
+		if (p1.equals(p2)) {
+			return false;
+		}
 		// no character selected, ignore
-		if (entities[p1.x][p1.y] == null) {
+		else if (entities[p1.x][p1.y] == null) {
 			return false;
 		}
 		// destination is another character
@@ -349,7 +370,7 @@ public class Map implements Pathfinding.Delegate {
 			else {
 				// move character
 				entities[p2.x][p2.y] = entities[p1.x][p1.y];
-				entities[p1.x][p2.y] = null;
+				entities[p1.x][p1.y] = null;
 			}
 		}
 		
@@ -444,14 +465,17 @@ public class Map implements Pathfinding.Delegate {
 	}
 
 	public boolean validPosition(Position p) {
-		if (p.x < 0 || p.x >= 10) {
+		if (p.x < 0 || p.x >= getWidth()) {
 			return false;
-		} else if (p.y < 0 || p.y >= 10) {
-			return false;
-		}
-		if (grid[p.x][p.y] == "#") {
+		} else if (p.y < 0 || p.y >= getHeight()) {
 			return false;
 		}
+		
+		Entity e = entities[p.x][p.y];
+		if (e != null && !(e instanceof Player)) {
+			return false;
+		}
+		
 		return true;
 	}
 

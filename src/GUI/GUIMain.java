@@ -33,7 +33,7 @@ public class GUIMain extends Application {
 		input = new Input();
 
 		// create map
-		map = new Map();
+		map = new Map(22, 15);
 		map.populateGrid();
 
 		// javafx setup
@@ -68,6 +68,10 @@ public class GUIMain extends Application {
 	private void sceneClicked(MouseEvent e) {
 		// delegate input handling
 		Position p = input.handleClick(e);
+		
+		if (p.x < 0 || p.x >= map.getWidth() || p.y < 0 || p.y >= map.getHeight()) {
+			return;
+		}
 
 		// first click
 		if (selectedPosition == null) {
@@ -88,8 +92,7 @@ public class GUIMain extends Application {
 		System.out.println("clicked x:" + e.getSceneX()
 				+ ", y:" + e.getSceneY());
 
-		// clear and update display
-		root.getChildren().clear();
+		// update display
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 	}
 }
