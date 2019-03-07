@@ -19,15 +19,16 @@ public class Display {
 			for(int j=grid[i].length-1;j>=0;j--) {
 				g.drawImage(floor,j*size,i*size);
 
+				//"space" is a black box (representing where the wall isn't visible because of the roof)
 				if (i<grid.length-1) {
-					if (!(grid[i+1][j] instanceof Character)) {
+					if (!(grid[i+1][j] instanceof Player) && grid[i+1][j] != null) {
 						g.drawImage(space,j*size,i*size);
 					}
-					else if (!(grid[i][j] instanceof Character)) {
+					else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {
 						g.drawImage(wall,j*size,i*size);
 					}
 				}
-				else if (!(grid[i][j] instanceof Character)) {
+				else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {
 					g.drawImage(wall,j*size,i*size);
 				}
 			}
