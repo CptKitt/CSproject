@@ -16,13 +16,12 @@ import javafx.stage.Stage;
 public class GUIMain extends Application {
 	private Map map;
 	private Display display;
-	private Input input;
 	private Scene scene;
 	private Group root;
 	private Canvas canvas;
-	
+
 	private Position selectedPosition = null;
-	
+
 	public final int WIDTH = 720;
 	public final int HEIGHT = 480;
 
@@ -30,7 +29,6 @@ public class GUIMain extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		// create i/o objects
 		display = new Display();
-		input = new Input();
 
 		// create map
 		map = new Map(22, 15);
@@ -66,17 +64,15 @@ public class GUIMain extends Application {
 	 * @param e The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent e) {
-		// delegate input handling
-		Position p = input.handleClick(e);
-		
-		if (p.x < 0 || p.x >= map.getWidth() || p.y < 0 || p.y >= map.getHeight()) {
-			return;
-		}
+		int x = (int)(e.getSceneX() / 32);
+		int y = (int)(e.getSceneY() / 32);
+
+		Position p = new Position(x,y);
 
 		// first click
 		if (selectedPosition == null) {
 			Set<Position> moves = map.possibleMovesForCharacter(p);
-			
+
 			// select character if possible moves exist
 			if (!moves.isEmpty()) {
 				selectedPosition = p;
@@ -87,7 +83,7 @@ public class GUIMain extends Application {
 			map.processAction(selectedPosition, p);
 			selectedPosition = null;
 		}
-		
+
 		// TODO: remove debug line, send possibleActions to Display
 		System.out.println("clicked x:" + e.getSceneX()
 				+ ", y:" + e.getSceneY());
