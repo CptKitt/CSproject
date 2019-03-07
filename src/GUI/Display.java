@@ -11,13 +11,13 @@ public class Display {
 		Entity[][] grid = m.getGrid();
 
 		//environment (walls, floors, et cetera)
-		Image floor = new Image("GUI\\assets\\tile1.png",32,32,true,false);
-		Image wall = new Image("GUI\\assets\\wall2.png",32,32,true,false);
-		Image space = new Image("GUI\\assets\\wall3.png",32,32,true,false);
+		Image floor = new Image("GUI/assets/tile1.png",32,32,true,false);
+		Image wall = new Image("GUI/assets/wall2.png",32,32,true,false);
+		Image space = new Image("GUI/assets/wall3.png",32,32,true,false);
 
 		//entities (players, enemies)
-		Image slime = new Image("GUI\\assets\\green_slime.png",32,32,true,false);
-		Image hero = new Image("GUI\\assets\\player1.png",32,32,true,false);
+		Image slime = new Image("GUI/assets/green_slime.png",32,32,true,false);
+		Image hero = new Image("GUI/assets/player1.png",32,32,true,false);
 
 		double size = 32d;
 
