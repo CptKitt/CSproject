@@ -31,7 +31,7 @@ public class GUIMain extends Application {
 		display = new Display();
 
 		// create map
-		map = new Map();
+		map = new Map(22, 15);
 		map.populateGrid();
 
 		// javafx setup
@@ -64,7 +64,6 @@ public class GUIMain extends Application {
 	 * @param e The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent e) {
-		// delegate input handling
 		int x = (int)(e.getSceneX() / 32);
 		int y = (int)(e.getSceneY() / 32);
 
@@ -89,8 +88,7 @@ public class GUIMain extends Application {
 		System.out.println("clicked x:" + e.getSceneX()
 				+ ", y:" + e.getSceneY());
 
-		// clear and update display
-		//root.getChildren().clear();
+		// update display
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
 	}
 }
