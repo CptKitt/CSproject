@@ -31,7 +31,7 @@ public class GUIMain extends Application {
 		display = new Display();
 
 		// create map
-		map = new Map(22, 15);
+		map = new Map(15, 22);
 		map.populateGrid();
 
 		// javafx setup
@@ -67,7 +67,7 @@ public class GUIMain extends Application {
 		int x = (int)(e.getSceneX() / 32);
 		int y = (int)(e.getSceneY() / 32);
 
-		Position p = new Position(x,y);
+		Position p = new Position(y,x);
 
 		// first click
 		if (selectedPosition == null) {
