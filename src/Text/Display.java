@@ -29,19 +29,8 @@ public class Display extends Map {
 
     public static void main (String[] args) {
         boolean exit = false;
-        Scanner in = new Scanner(System.in);
-        Map dis = new Map();
-        dis.populateGrid();
-        dis.printGrid();
-        while(!exit) {
-            String todo = in.nextLine();
-            if (todo == "exit") {
-                exit = true;
-            }
-            else {
-                dis.populateGrid();
-                dis.printGrid();
-            }
+        
+
 }
     }
 }
