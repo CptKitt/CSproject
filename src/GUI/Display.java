@@ -27,7 +27,7 @@ public class Display {
 
 				//"space" is a black box (representing where the wall isn't visible because of the roof)
 				if (i<grid.length-1) {
-					if (!(grid[i+1][j] instanceof Player) && grid[i+1][j] != null) {
+					if ((!(grid[i+1][j] instanceof Player) && grid[i+1][j] != null) && (!(grid[i][j] instanceof Player) && grid[i][j] != null)) {
 						g.drawImage(space,j*size,i*size);
 					}
 					else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {

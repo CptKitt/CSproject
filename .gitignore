@@ -4,5 +4,6 @@
 *.kotlin_module
 *.classpath
 *.project
+*.bat
 /bin/
 /out/
