@@ -22,6 +22,8 @@ public class Map implements Pathfinding.Delegate {
 		
 		for (x = 0; x < getWidth(); x++) {
 			for (y = 0; y < getHeight(); y++) {
+				grid[x][y] = ".";
+				entities[x][y] = null;
 				visibility[x][y] = 0;
 			}
 		}
@@ -371,10 +373,12 @@ public class Map implements Pathfinding.Delegate {
 				// move character
 				entities[p2.x][p2.y] = entities[p1.x][p1.y];
 				entities[p1.x][p1.y] = null;
+				entities[p2.x][p2.y].setPOS(p2);
 			}
 		}
 		
-		// action successfully completed
+		// action successfully completed, finish
+		updateVisibility();
 		return true;
 	}
 	
