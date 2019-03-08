@@ -1,7 +1,8 @@
 package GUI;
 
 import Model.*;
-import java.util.*;
+import java.util.Set;
+import java.util.HashSet;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -21,6 +22,7 @@ public class GUIMain extends Application {
 	private Canvas canvas;
 
 	private Position selectedPosition = null;
+	private Set<Position> possibleMoves = new HashSet<>();
 
 	public final int WIDTH = 720;
 	public final int HEIGHT = 480;
@@ -43,7 +45,7 @@ public class GUIMain extends Application {
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
 		// display once
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), new HashSet<>());
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 
 		// show application
 		primaryStage.setScene(scene);
@@ -76,12 +78,14 @@ public class GUIMain extends Application {
 			// select character if possible moves exist
 			if (!moves.isEmpty()) {
 				selectedPosition = p;
+				possibleMoves = moves;
 			}
 		}
 		// second click: try performing action
 		else {
 			map.processAction(selectedPosition, p);
 			selectedPosition = null;
+			possibleMoves.clear();
 		}
 
 		// TODO: remove debug line, send possibleActions to Display
@@ -89,6 +93,6 @@ public class GUIMain extends Application {
 				+ ", y:" + e.getSceneY());
 
 		// update display
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), new HashSet<>());
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
 }

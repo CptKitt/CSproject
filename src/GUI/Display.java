@@ -1,6 +1,7 @@
 package GUI;
 
 import Model.*;
+import java.util.Set;
 import javafx.scene.Group;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
