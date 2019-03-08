@@ -1,7 +1,7 @@
 package GUI;
 
 import Model.*;
-import java.util.Set;
+import java.util.*;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -43,7 +43,7 @@ public class GUIMain extends Application {
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
 		// display once
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), new HashSet<>());
 
 		// show application
 		primaryStage.setScene(scene);
@@ -89,6 +89,6 @@ public class GUIMain extends Application {
 				+ ", y:" + e.getSceneY());
 
 		// update display
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), new HashSet<>());
 	}
 }

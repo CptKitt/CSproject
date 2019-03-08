@@ -7,13 +7,14 @@ import javafx.scene.image.Image;
 import java.io.File;
 
 public class Display {
-	public void drawMapOnScene(Map m, GraphicsContext g) {
+	public void drawMapOnScene(Map m, GraphicsContext g, Set<Position> highlighted) {
 		Entity[][] grid = m.getGrid();
-
+		double[][] visgrid = m.getVisibility();
 		//environment (walls, floors, et cetera)
 		Image floor = new Image("GUI/assets/tile1.png",32,32,true,false);
 		Image wall = new Image("GUI/assets/wall2.png",32,32,true,false);
 		Image space = new Image("GUI/assets/wall3.png",32,32,true,false);
+		Image highlight;
 
 		//entities (players, enemies)
 		Image slime = new Image("GUI/assets/green_slime.png",32,32,true,false);
@@ -24,6 +25,10 @@ public class Display {
 		for(int i=grid.length-1;i>=0;i--) {
 			for(int j=grid[i].length-1;j>=0;j--) {
 				g.drawImage(floor,j*size,i*size);
+
+				if (highlighted.contains(new Position(i,j))) {
+					g.draw(highlight )
+				}
 
 				//"space" is a black box (representing where the wall isn't visible because of the roof)
 				if (i<grid.length-1) {
