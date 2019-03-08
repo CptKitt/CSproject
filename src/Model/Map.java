@@ -327,7 +327,7 @@ public class Map implements Pathfinding.Delegate {
 	 */
 	public Set<Position> possibleMovesForCharacter(Position p) {
 		// no character at position, return empty set
-		if (entities[p.x][p.y] == null) {
+		if (!(entities[p.x][p.y] instanceof Player)) {
 			return new HashSet<>();
 		}
 		
@@ -348,7 +348,7 @@ public class Map implements Pathfinding.Delegate {
 			return false;
 		}
 		// no character selected, ignore
-		else if (entities[p1.x][p1.y] == null) {
+		else if (!(entities[p1.x][p1.y] instanceof Player)) {
 			return false;
 		}
 		// destination is another character
