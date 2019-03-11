@@ -96,9 +96,7 @@ public class Map implements Pathfinding.Delegate {
 		}
 	}
     
-    /**
-     * Creates a random map.
-     */
+    /** Creates a random map. */
 	public void populateGrid() {
 	    switch (rand.nextInt(4)) {
             case 0: generateCave(); break;
@@ -145,20 +143,20 @@ public class Map implements Pathfinding.Delegate {
 		
 	    // run ellipse calculations
 		for (int x = 0; x < getWidth(); x++) {
-		   for (int y = 0; y < getHeight(); y++) {
-		      double dx = x - cx + 0.5;
-		      double dy = y - cy + 0.5;
-		      
-		      // inside ellipse, empty space
-		      if (Math.pow(dx / width, 2) + Math.pow(dy / height, 2) < 1) {
-			      grid[x][y] = ".";
-			      entities[x][y] = null;
-		      }
-		      else { // wall
-			      grid[x][y] = "#";
-			      entities[x][y] = newWall(new Position(x, y));
-		      }
-		   }
+            for (int y = 0; y < getHeight(); y++) {
+                double dx = x - cx + 0.5;
+                double dy = y - cy + 0.5;
+                
+                // inside ellipse, empty space
+                if (Math.pow(dx / width, 2) + Math.pow(dy / height, 2) < 1) {
+                    grid[x][y] = ".";
+                    entities[x][y] = null;
+                }
+                else { // wall
+                    grid[x][y] = "#";
+                    entities[x][y] = newWall(new Position(x, y));
+                }
+            }
 		}
 	
 	    placePlayer();
@@ -166,68 +164,124 @@ public class Map implements Pathfinding.Delegate {
     
     /**
      * Generates a dungeon-like map.
-     * Makes a number of rooms, then
-     * connects them with hallways.
+     * Makes a number of rooms, then connects them with hallways.
      */
-	public void generateDungeon() {
+    public void generateDungeon() {
+		/**
+		 * Convenience class for room representation.
+		 */
+		class Room {
+			final Position origin;
+			final int width, height;
+	
+			/**
+			 * @param origin The top left Position of the Room.
+			 * @param width The width of the Room.
+			 * @param height The height of the Room.
+			 */
+			Room(Position origin, int width, int height) {
+				this.origin = origin;
+				this.width = width;
+				this.height = height;
+			}
+	
+			/**
+			 * @param other The Room to compare against.
+			 * @return True if the rooms are touching, false otherwise.
+			 */
+			boolean touches(Room other) {
+				// calculate expanded room to allow intersection check
+				Room box = new Room(
+						other.origin.moved(-1, -1),
+						other.width + 2, other.height + 2);
+				return !(origin.x > box.origin.x + box.width ||
+						origin.x + width < box.origin.x ||
+						origin.y > box.origin.y + box.height ||
+						origin.y + height < box.origin.y);
+			}
+	
+			/**
+			 * @return A random Position inside the room.
+			 */
+			Position randomPosition() {
+				return origin.moved(
+						rand.nextInt(width),
+						rand.nextInt(height));
+			}
+		}
+		
 		// fill with walls
 		fillWalls();
 		
-		// generate rooms
-		int numRooms = rand.nextInt(3) + 2;
-	    List<Position> centers = new ArrayList<>();
-	    
-	    for (int i = 0; i < numRooms; i++) {
-	    	// randomize room properties
-		    Position center = new Position(
-		    		rand.nextInt(getWidth()),
-				    rand.nextInt(getHeight()));
-		    centers.add(center);
-	    	int width = rand.nextInt(6) + 3;
-	    	int height = rand.nextInt(6) + 3;
-	    	int xOffset = rand.nextInt(width);
-	    	int yOffset = rand.nextInt(height);
-	    	
-	    	for (int dx = 0; dx < width; dx++) {
-	    		for (int dy = 0; dy < height; dy++) {
-	    			int x = center.x + dx - xOffset;
-	    			int y = center.y + dy - yOffset;
-	    			
-	    			if (x >= 0 && x < getWidth()
-						    && y >= 0 && y < getHeight()) {
-	    				grid[x][y] = ".";
-	    				entities[x][y] = null;
-				    }
-			    }
-		    }
-	    }
-	    
-	    // generate hallways
-		Set<Position> connected = new HashSet<>();
-	    connected.add(centers.get(0));
-	    
-	    for (int i = 1; i < centers.size(); i++) {
-	    	Position start = centers.get(i);
-	    	Position end; // pick random connected end
-	    	do {
-	    		end = centers.get(rand.nextInt(centers.size()));
-		    } while (!connected.contains(end));
-	    	connected.add(start);
-	    	
-		    for (Position p : Pathfinding
-				    .shortestPath(p -> true, start, end)) {
-		    	grid[p.x][p.y] = ".";
-		    	entities[p.x][p.y] = null;
-		    }
-	    }
+		List<Room> rooms = new ArrayList<>();
+		int failed = 0;
+		
+		// fill with as many rooms as possible
+		while (failed < 100) {
+			// generate dimensions
+			Position pos = new Position(
+					rand.nextInt(getWidth() - 4) + 1,
+					rand.nextInt(getHeight() - 4) + 1);
+			int dw = Math.min(6, getWidth() - pos.x - 2);
+			int width = rand.nextInt(dw) + 2;
+			int dh = Math.min(6, getHeight() - pos.y - 2);
+			int height = rand.nextInt(dh) + 2;
+			
+			// create room (rectangle)
+			Room room = new Room(pos, width, height);
+			
+			// check for intersect with other rooms
+			if (rooms.stream().anyMatch(r -> r.touches(room))) {
+				failed++;
+				continue;
+			}
+			
+			// add, clear tiles
+			rooms.add(room);
+			for (int x = pos.x; x < pos.x + width; x++) {
+				for (int y = pos.y; y < pos.y + height; y++) {
+					if (x >= 0 && x < getWidth()
+							&& y >= 0 && y < getHeight()) {
+						grid[x][y] = ".";
+						entities[x][y] = null;
+					}
+				}
+			}
+		}
+		
+		// generate hallways
+		List<Room> connected = new ArrayList<>();
+		connected.add(rooms.get(0));
+		
+		for (Room r : rooms) {
+			if (connected.isEmpty()) {
+				connected.add(r);
+				continue;
+			}
+			
+			// pick random connected room
+			Room r2 = connected.get(rand.nextInt(connected.size()));
+			connected.add(r);
+			
+			Position start = r.randomPosition();
+			Position end = r2.randomPosition();
+			System.out.println(start + " " + end);
+			
+			// find path and clear
+			for (Position p : Pathfinding
+					.shortestPath(p -> true, start, end)) {
+				grid[p.x][p.y] = ".";
+				entities[p.x][p.y] = null;
+			}
+		}
 		
 		placePlayer();
     }
     
     /**
      * Generates a cave-like map.
-     * Works by generating a number of connected lines and
-     * emptying out the tiles near them.
+     * Creates a number of connected lines and
+     * empties out the tiles near them.
      */
     public void generateCave() {
     	// all walls to begin
@@ -414,12 +468,11 @@ public class Map implements Pathfinding.Delegate {
 				for (int x = 0; x < width; x++) {
 					switch (line.charAt(x)) {
 						case ' ': // empty space
-       
+							entities[x][y] = null;
 							break;
 						case 'W': // wall
 							entities[x][y] = newWall(new Position(x, y));
 							break;
-							
 						case 'C': // some character
                             entities[x][y] = newPlayer(new Position(x, y));
 							break;

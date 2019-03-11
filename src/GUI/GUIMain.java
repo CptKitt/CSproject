@@ -7,6 +7,8 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -21,20 +23,16 @@ public class GUIMain extends Application {
 	private Group root;
 	private Canvas canvas;
 
-	private Position selectedPosition = null;
-	private Set<Position> possibleMoves = new HashSet<>();
+	private Position selectedPosition;
+	private Set<Position> possibleMoves;
 
-	public final int WIDTH = 720;
-	public final int HEIGHT = 480;
+	public static final int WIDTH = 704;
+	public static final int HEIGHT = 480;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// create i/o objects
+		// create i/o
 		display = new Display();
-
-		// create map
-		map = new Map(15, 22);
-		map.populateGrid();
 
 		// javafx setup
 		canvas = new Canvas(WIDTH, HEIGHT);
@@ -43,9 +41,16 @@ public class GUIMain extends Application {
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
-
-		// display once
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
+		
+		// temporary reset button
+		scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.getCode() == KeyCode.SPACE) {
+				reset();
+			}
+		});
+		
+		// create map and vars
+		reset();
 
 		// show application
 		primaryStage.setScene(scene);
@@ -59,6 +64,19 @@ public class GUIMain extends Application {
 	 */
 	public static void main(String[] args) {
 		launch(args);
+	}
+	
+	/**
+	 * Generates a new map and resets variables.
+	 */
+	private void reset() {
+		map = new Map(15, 22);
+		map.populateGrid();
+		selectedPosition = null;
+		possibleMoves = new HashSet<>();
+		
+		// display once
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
 
 	/**
