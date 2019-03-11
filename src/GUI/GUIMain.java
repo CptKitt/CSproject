@@ -66,10 +66,15 @@ public class GUIMain extends Application {
 	 * @param e The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent e) {
+		// convert coordinates to account for drawing
 		int x = (int)(e.getSceneX() / 32);
 		int y = (int)(e.getSceneY() / 32);
-
-		Position p = new Position(y,x);
+		Position p = new Position(y, x);
+		
+		// make sure position exists on map
+		if (p.x < 0 || p.x >= map.getWidth() || p.y < 0 || p.y >= map.getHeight()) {
+			return;
+		}
 
 		// first click
 		if (selectedPosition == null) {

@@ -87,8 +87,10 @@ public class Map implements Pathfinding.Delegate {
 				}
 				Position pos = new Position(x, y);
 				for (Position p : Pathfinding.visibility(this, pos, 5)) {
-					double opacity = 1.0 / Math.max(pos.distanceTo(p), 1);
-					visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
+					if (p.x >= 0 && p.x < getWidth() && p.y >= 0 && p.y < getHeight()) {
+						double opacity = 1.0 / Math.max(pos.distanceTo(p), 1);
+						visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
+					}
 				}
 			}
 		}
