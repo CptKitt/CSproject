@@ -4,50 +4,44 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
+/**
+ * Model class containing all information necessary
+ * to play and interact with the game.
+ * <p></p>
+ * As Map is purely a logic class, it cannot display
+ * its information itself, but other classes can use
+ * its {@code getGrid()} and {@code processAction()}
+ * methods to display and interact with it.
+ */
 public class Map implements Pathfinding.Delegate {
-	private String[][] grid;
-	Random rand = new Random();
+	private Random rand = new Random();
+	
+	/** The characters and walls held by the map. */
 	private Entity[][] entities;
+	
+	/**
+	 * A grid of the visibility of positions on the Map.
+	 * Each tile contains a double from 0.0 to 1.0, where
+	 * 0.0 represents a non-visible tile, and
+	 * 1.0 represents a fully-visible tile.
+	 */
 	private double[][] visibility;
-	private Position start;
-
+	
+	/** Creates a 10x10 Map. */
 	public Map() {
 		this(10, 10);
 	}
 	
+	/**
+	 * Creates a Map with the specified dimensions.
+	 * @param x The width of the Map.
+	 * @param y The height of the Map.
+	 */
 	public Map(int x, int y) {
-		grid = new String[x][y];
 		entities = new Entity[x][y];
 		visibility = new double[x][y];
 		
-		for (x = 0; x < getWidth(); x++) {
-			for (y = 0; y < getHeight(); y++) {
-				grid[x][y] = ".";
-				entities[x][y] = null;
-				visibility[x][y] = 0;
-			}
-		}
-		
-		newStart();
 		populateGrid();
-	}
-
-	// TODO: remove start methods
-	public Position getStart() {
-		return start;
-	}
-
-	public void setStart(Position start) {
-		for (int i = 0; i < getWidth(); i++)
-			for (int j = 0; j < getHeight(); j++)
-				grid[i][j] = grid[i][j] == "#" ? "#" : ".";
-		this.start = start;
-	}
-
-	public void newStart() {
-		start = new Position(
-				rand.nextInt(getWidth()),
-				rand.nextInt(getHeight()));
 	}
 	
 	/**
@@ -78,20 +72,33 @@ public class Map implements Pathfinding.Delegate {
 	}
 	
 	/** Updates visibility for the whole Map. */
-	public void updateVisibility() {
+	private void updateVisibility() {
+		List<Position> toUpdate = new ArrayList<>();
+		
+		// look for players
 		for (int x = 0; x < getWidth(); x++) {
 			for (int y = 0; y < getHeight(); y++) {
 				Entity e = entities[x][y];
-				if (e == null || !(e instanceof Player)) {
+				if (e instanceof Player) {
+					toUpdate.add(new Position(x, y));
+				}
+			}
+		}
+		
+		System.out.println(toUpdate);
+		
+		// go through each player position
+		for (Position pos: toUpdate) {
+			for (Position p : Pathfinding.visibility(this, pos, 7)) {
+				// check OOB
+				if (p.x < 0 || p.x >= getWidth() || p.y < 0 || p.y >= getHeight()) {
 					continue;
 				}
-				Position pos = new Position(x, y);
-				for (Position p : Pathfinding.visibility(this, pos, 5)) {
-					if (p.x >= 0 && p.x < getWidth() && p.y >= 0 && p.y < getHeight()) {
-						double opacity = 1.0 / Math.max(pos.distanceTo(p), 1);
-						visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
-					}
-				}
+				
+				// parabolic opacity curve
+				double dist = pos.distanceTo(p);
+				double opacity = Math.min(1, -Math.pow(dist / 7, 2) + 1.1);
+				visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
 			}
 		}
 	}
@@ -104,29 +111,29 @@ public class Map implements Pathfinding.Delegate {
             case 2: generateDungeon(); break;
             default: generateRandom(); break;
         }
+        
+        visibility = new double[getWidth()][getHeight()];
+        updateVisibility();
 	}
     
     /** Generates walls randomly. */
 	public void generateRandom() {
         for (int i = 0; i < getWidth(); i++) {
             for (int j = 0; j < getHeight(); j++) {
+                // 1/3 chance for a wall
                 int tileChance = rand.nextInt(3);
-                String tile;
-                if (i == start.x && j == start.y) {
-                    tile = "x";
-                    entities[i][j] = newPlayer(new Position(i, j));
-                }
-                else if (tileChance == 0 || tileChance == 1) {
-                    tile = ".";
+                
+                if (tileChance <= 1) {
                     entities[i][j] = null;
                 }
                 else {
-                    tile = "#";
                     entities[i][j] = newWall(new Position(i, j));
                 }
-                grid[i][j] = tile;
             }
         }
+        
+        wallBorder();
+        placePlayer();
     }
     
     /**
@@ -149,11 +156,9 @@ public class Map implements Pathfinding.Delegate {
                 
                 // inside ellipse, empty space
                 if (Math.pow(dx / width, 2) + Math.pow(dy / height, 2) < 1) {
-                    grid[x][y] = ".";
                     entities[x][y] = null;
                 }
                 else { // wall
-                    grid[x][y] = "#";
                     entities[x][y] = newWall(new Position(x, y));
                 }
             }
@@ -242,7 +247,6 @@ public class Map implements Pathfinding.Delegate {
 				for (int y = pos.y; y < pos.y + height; y++) {
 					if (x >= 0 && x < getWidth()
 							&& y >= 0 && y < getHeight()) {
-						grid[x][y] = ".";
 						entities[x][y] = null;
 					}
 				}
@@ -268,9 +272,7 @@ public class Map implements Pathfinding.Delegate {
 			System.out.println(start + " " + end);
 			
 			// find path and clear
-			for (Position p : Pathfinding
-					.shortestPath(p -> true, start, end)) {
-				grid[p.x][p.y] = ".";
+			for (Position p : Pathfinding.shortestPath(p -> true, start, end)) {
 				entities[p.x][p.y] = null;
 			}
 		}
@@ -294,9 +296,12 @@ public class Map implements Pathfinding.Delegate {
 			    rand.nextInt(getHeight()));
 	    do {
 	    	// random end position
-	        Position end = new Position(
-			        rand.nextInt(getWidth()),
-			        rand.nextInt(getHeight()));
+		    Position end;
+		    do {
+		    	end = new Position(
+					    rand.nextInt(getWidth()),
+					    rand.nextInt(getHeight()));
+		    } while (start.distanceTo(end) <= 8);
 	        
 	        // find random line to end position
 		    // (Pathfinding A* is too linear)
@@ -330,7 +335,6 @@ public class Map implements Pathfinding.Delegate {
 			    		
 			    		// inside radius, clear wall
 			    		if (dx + dy < radius) {
-			    			grid[x][y] = ".";
 			    			entities[x][y] = null;
 					    }
 				    }
@@ -344,6 +348,7 @@ public class Map implements Pathfinding.Delegate {
 		    probability -= 30;
         } while (rand.nextInt(100) < probability);
 	    
+	    wallBorder();
 	    placePlayer();
     }
 	
@@ -351,13 +356,25 @@ public class Map implements Pathfinding.Delegate {
     private void fillWalls() {
 	    for (int x = 0; x < getWidth(); x++) {
 		    for (int y = 0; y < getHeight(); y++) {
-			    grid[x][y] = "#";
 			    entities[x][y] = newWall(new Position(x, y));
 		    }
 	    }
     }
+    
+    /** Convenience function to fill the border of the map with walls. */
+    private void wallBorder() {
+        for (int x = 0; x < getWidth(); x++) {
+            entities[x][0] = newWall(new Position(x, 0));
+            entities[x][getHeight()-1] = newWall(new Position(x, getHeight()-1));
+        }
+        
+        for (int y = 0; y < getHeight(); y++) {
+            entities[0][y] = newWall(new Position(0, y));
+            entities[getWidth()-1][y] = newWall(new Position(getWidth()-1, y));
+        }
+    }
 	
-	/** Temporary convenience function to place the character. */
+	/** Convenience function to place the character on the Map. */
     private void placePlayer() {
     	Position p;
     	do {
@@ -367,16 +384,20 @@ public class Map implements Pathfinding.Delegate {
 	    } while (entities[p.x][p.y] != null);
     	entities[p.x][p.y] = newPlayer(p);
     }
-
-	// TODO: Delete in favor of Display.
-	public void printGrid() {
-		for(int i = 0; i < getHeight(); i++) {
-			for(int j = 0; j < getWidth(); j++) {
-				System.out.print(grid[j][i]);
-			}
-			System.out.print("\n");
-		}
-	}
+    
+    /** Function to be deprecated. */
+    public void setStart(Position p) {
+    	Position playerPos = Position.NONE;
+    	for (int x = 0; x < getWidth(); x++) {
+    		for (int y = 0; y < getHeight(); y++) {
+    			if (entities[x][y] instanceof Player) {
+    				playerPos = new Position(x, y);
+			    }
+		    }
+	    }
+    	
+    	processAction(playerPos, p);
+    }
 	
 	/**
 	 * Calculates the possible moves for an Entity at a Position.
@@ -459,7 +480,6 @@ public class Map implements Pathfinding.Delegate {
 			int width = lines.get(0).length();
 			int height = lines.size();
 			
-			grid = new String[width][height];
 			entities = new Entity[width][height];
 			
 			// read information
@@ -509,20 +529,6 @@ public class Map implements Pathfinding.Delegate {
 			    position, 0, 0);
     }
 
-	public void pathfind() {
-		Set<Position> moves = Pathfinding.movementForPosition(
-		        this, start,rand.nextInt(4)+2);
-
-		for(Position p : moves) {
-			if(p.x == start.x && p.y == start.y) {
-				grid[p.x][p.y] = "x";
-			}
-			else {
-				grid[p.x][p.y] = "*";
-			}
-		}
-	}
-
 	public boolean validPosition(Position p) {
 		if (p.x < 0 || p.x >= getWidth()) {
 			return false;
@@ -536,27 +542,5 @@ public class Map implements Pathfinding.Delegate {
 		}
 		
 		return true;
-	}
-
-	public static void main (String[] args) {
-		boolean exit = false;
-		Scanner in = new Scanner(System.in);
-		Map asdf = new Map();
-		asdf.populateGrid();
-		asdf.pathfind();
-		asdf.printGrid();
-
-		while(!exit) {
-			String todo = in.nextLine();
-			if (todo == "exit") {
-				exit = true;
-			}
-			else {
-				asdf.newStart();
-				asdf.populateGrid();
-				asdf.pathfind();
-				asdf.printGrid();
-			}
-		}
 	}
 }

@@ -24,7 +24,6 @@ public class TextMain {
 		UserInput input = new UserInput();
 
 		while (true) {
-			map.pathfind();
 			display.printMap(map);
 			Position move = input.movementInput();
 			map.setStart(new Position(move));

@@ -1,47 +1,50 @@
 package Tests;
 
 import Model.Map;
+import Text.Display;
 
 public class MapTests {
     public static void main(String[] args) {
-        Map m = new Map(10, 10);
+        Display d = new Display();
+        
+        Map m = new Map(40, 40);
         m.generateDungeon();
-        m.printGrid();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(11, 11);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCircle();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(20, 10);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCircle();
+        d.printMap(m);
         System.out.println();
     
-        m = new Map(10, 20);
+        m = new Map(10, 10);
         m.generateDungeon();
-        m.printGrid();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(20, 20);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCave();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(40, 10);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCircle();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(40, 20);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCave();
+        d.printMap(m);
         System.out.println();
     
         m = new Map(40, 20);
-        m.generateDungeon();
-        m.printGrid();
+        m.generateCave();
+        d.printMap(m);
         System.out.println();
     }
 }
