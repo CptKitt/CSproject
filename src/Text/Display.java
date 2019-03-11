@@ -12,13 +12,19 @@ public class Display {
         Entity[][] grid = map.getGrid();
         Entity entities;
 
-            for (int i = 0; i < grid.length; i++) {
-                System.out.print(i + "");
-                System.out.print("  ");
-                for (int j = 0; j < grid[i].length; j++) {
-                    System.out.print(j + "");
+        System.out.print(" ");
 
-                    entities = grid[i][j];
+        for (int i = 0; i < grid[0].length; i++){
+            System.out.print(i + " ");
+        }
+
+        for (int i = 0; i < grid[i].length; i++) {
+            System.out.print(i + "");
+
+            for (int j = 0; j < grid[j].length; j++) {
+                System.out.print(j + "");
+
+                entities = grid[i][j];
 
                 if (entities == null) {
                     System.out.println(" ");
@@ -26,7 +32,7 @@ public class Display {
                 } else if (entities instanceof Player) {
                     System.out.println("x");
 
-                } else  {
+                } else {
                     System.out.println("#");
 
                 }
@@ -37,9 +43,8 @@ public class Display {
 
         }
     }
-    public static void main(String[] args){
 
 
-    }
 }
+
 
