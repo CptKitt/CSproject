@@ -2,6 +2,7 @@ package GUI;
 
 import Model.*;
 import java.util.Set;
+import java.util.HashSet;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -16,13 +17,13 @@ import javafx.stage.Stage;
 public class GUIMain extends Application {
 	private Map map;
 	private Display display;
-	private Input input;
 	private Scene scene;
 	private Group root;
 	private Canvas canvas;
-	
+
 	private Position selectedPosition = null;
-	
+	private Set<Position> possibleMoves = new HashSet<>();
+
 	public final int WIDTH = 720;
 	public final int HEIGHT = 480;
 
@@ -30,10 +31,9 @@ public class GUIMain extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		// create i/o objects
 		display = new Display();
-		input = new Input();
 
 		// create map
-		map = new Map();
+		map = new Map(15, 22);
 		map.populateGrid();
 
 		// javafx setup
@@ -45,7 +45,7 @@ public class GUIMain extends Application {
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 
 		// display once
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 
 		// show application
 		primaryStage.setScene(scene);
@@ -66,30 +66,33 @@ public class GUIMain extends Application {
 	 * @param e The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent e) {
-		// delegate input handling
-		Position p = input.handleClick(e);
+		int x = (int)(e.getSceneX() / 32);
+		int y = (int)(e.getSceneY() / 32);
+
+		Position p = new Position(y,x);
 
 		// first click
 		if (selectedPosition == null) {
 			Set<Position> moves = map.possibleMovesForCharacter(p);
-			
+
 			// select character if possible moves exist
 			if (!moves.isEmpty()) {
 				selectedPosition = p;
+				possibleMoves = moves;
 			}
 		}
 		// second click: try performing action
 		else {
 			map.processAction(selectedPosition, p);
 			selectedPosition = null;
+			possibleMoves.clear();
 		}
-		
+
 		// TODO: remove debug line, send possibleActions to Display
 		System.out.println("clicked x:" + e.getSceneX()
 				+ ", y:" + e.getSceneY());
 
-		// clear and update display
-		root.getChildren().clear();
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D());
+		// update display
+		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
 }

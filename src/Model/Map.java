@@ -8,6 +8,7 @@ public class Map implements Pathfinding.Delegate {
 	private String[][] grid;
 	Random rand = new Random();
 	private Entity[][] entities;
+	private double[][] visibility;
 	private Position start;
 
 	public Map() {
@@ -17,6 +18,16 @@ public class Map implements Pathfinding.Delegate {
 	public Map(int x, int y) {
 		grid = new String[x][y];
 		entities = new Entity[x][y];
+		visibility = new double[x][y];
+		
+		for (x = 0; x < getWidth(); x++) {
+			for (y = 0; y < getHeight(); y++) {
+				grid[x][y] = ".";
+				entities[x][y] = null;
+				visibility[x][y] = 0;
+			}
+		}
+		
 		newStart();
 		populateGrid();
 	}
@@ -39,6 +50,9 @@ public class Map implements Pathfinding.Delegate {
 				rand.nextInt(getHeight()));
 	}
 	
+	/**
+	 * @return A copy of the entities represented by this Map.
+	 */
 	public Entity[][] getGrid() {
 		Entity[][] copy = new Entity[getWidth()][getHeight()];
 		for (int x = 0; x < getWidth(); x++) {
@@ -47,7 +61,37 @@ public class Map implements Pathfinding.Delegate {
 				copy[x][y] = entities[x][y];
 			}
 		}
-		return entities;
+		return copy;
+	}
+	
+	/**
+	 * @return A copy of the visibility of this Map.
+	 */
+	public double[][] getVisibility() {
+		double[][] copy = new double[getWidth()][getHeight()];
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
+				copy[x][y] = visibility[x][y];
+			}
+		}
+		return copy;
+	}
+	
+	/** Updates visibility for the whole Map. */
+	public void updateVisibility() {
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
+				Entity e = entities[x][y];
+				if (e == null || !(e instanceof Player)) {
+					continue;
+				}
+				Position pos = new Position(x, y);
+				for (Position p : Pathfinding.visibility(this, pos, 5)) {
+					double opacity = 1.0 / Math.max(pos.distanceTo(p), 1);
+					visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
+				}
+			}
+		}
 	}
     
     /**
@@ -62,9 +106,7 @@ public class Map implements Pathfinding.Delegate {
         }
 	}
     
-    /**
-     * Generates walls randomly.
-     */
+    /** Generates walls randomly. */
 	public void generateRandom() {
         for (int i = 0; i < getWidth(); i++) {
             for (int j = 0; j < getHeight(); j++) {
@@ -116,6 +158,8 @@ public class Map implements Pathfinding.Delegate {
 		      }
 		   }
 		}
+	
+	    placePlayer();
     }
     
     /**
@@ -174,6 +218,8 @@ public class Map implements Pathfinding.Delegate {
 		    	entities[p.x][p.y] = null;
 		    }
 	    }
+		
+		placePlayer();
     }
     
     /**
@@ -241,6 +287,8 @@ public class Map implements Pathfinding.Delegate {
 	        // chance to continue cave
 		    probability -= 30;
         } while (rand.nextInt(100) < probability);
+	    
+	    placePlayer();
     }
 	
 	/** Convenience function to fill the map with walls. */
@@ -251,6 +299,17 @@ public class Map implements Pathfinding.Delegate {
 			    entities[x][y] = newWall(new Position(x, y));
 		    }
 	    }
+    }
+	
+	/** Temporary convenience function to place the character. */
+    private void placePlayer() {
+    	Position p;
+    	do {
+    		p = new Position(
+    				rand.nextInt(getWidth()),
+				    rand.nextInt(getHeight()));
+	    } while (entities[p.x][p.y] != null);
+    	entities[p.x][p.y] = newPlayer(p);
     }
 
 	// TODO: Delete in favor of Display.
@@ -270,7 +329,7 @@ public class Map implements Pathfinding.Delegate {
 	 */
 	public Set<Position> possibleMovesForCharacter(Position p) {
 		// no character at position, return empty set
-		if (entities[p.x][p.y] == null) {
+		if (!(entities[p.x][p.y] instanceof Player)) {
 			return new HashSet<>();
 		}
 		
@@ -286,8 +345,12 @@ public class Map implements Pathfinding.Delegate {
 	 * @return Whether the action was valid or not.
 	 */
 	public boolean processAction(Position p1, Position p2) {
+		// destination is the entity, ignore
+		if (p1.equals(p2)) {
+			return false;
+		}
 		// no character selected, ignore
-		if (entities[p1.x][p1.y] == null) {
+		else if (!(entities[p1.x][p1.y] instanceof Player)) {
 			return false;
 		}
 		// destination is another character
@@ -309,11 +372,13 @@ public class Map implements Pathfinding.Delegate {
 			else {
 				// move character
 				entities[p2.x][p2.y] = entities[p1.x][p1.y];
-				entities[p1.x][p2.y] = null;
+				entities[p1.x][p1.y] = null;
+				entities[p2.x][p2.y].setPOS(p2);
 			}
 		}
 		
-		// action successfully completed
+		// action successfully completed, finish
+		updateVisibility();
 		return true;
 	}
 	
@@ -404,14 +469,17 @@ public class Map implements Pathfinding.Delegate {
 	}
 
 	public boolean validPosition(Position p) {
-		if (p.x < 0 || p.x >= 10) {
+		if (p.x < 0 || p.x >= getWidth()) {
 			return false;
-		} else if (p.y < 0 || p.y >= 10) {
-			return false;
-		}
-		if (grid[p.x][p.y] == "#") {
+		} else if (p.y < 0 || p.y >= getHeight()) {
 			return false;
 		}
+		
+		Entity e = entities[p.x][p.y];
+		if (e != null && !(e instanceof Player)) {
+			return false;
+		}
+		
 		return true;
 	}
 
