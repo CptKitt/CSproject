@@ -15,7 +15,7 @@ public class Display {
 		Image floor = new Image("GUI/assets/tile1.png",32,32,true,false);
 		Image wall = new Image("GUI/assets/wall2.png",32,32,true,false);
 		Image space = new Image("GUI/assets/wall3.png",32,32,true,false);
-		Image highlight;
+		Image highlight = new Image("GUI/assets/move_highlight.png",32,32,true,false);
 
 		//entities (players, enemies)
 		Image slime = new Image("GUI/assets/green_slime.png",32,32,true,false);
@@ -28,7 +28,7 @@ public class Display {
 				g.drawImage(floor,j*size,i*size);
 
 				if (highlighted.contains(new Position(i,j))) {
-					g.draw(highlight )
+					g.drawImage(highlight,j*size,i*size);
 				}
 
 				//"space" is a black box (representing where the wall isn't visible because of the roof)
