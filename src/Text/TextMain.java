@@ -25,7 +25,7 @@ public class TextMain {
 
 		while (true) {
 			map.pathfind();
-			display.printGrid();
+			display.printMap(map);
 			Position move = input.movementInput();
 			map.setStart(new Position(move));
 		}
