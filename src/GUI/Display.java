@@ -5,6 +5,7 @@ import java.util.Set;
 import javafx.scene.Group;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import java.io.File;
 
 public class Display {
@@ -29,6 +30,10 @@ public class Display {
 
 				if (highlighted.contains(new Position(i,j))) {
 					g.drawImage(highlight,j*size,i*size);
+				}
+				else {
+					g.setFill(new Color(0,0,0,0.5));
+					g.fillRect(j*size,i*size,32,32);
 				}
 
 				//"space" is a black box (representing where the wall isn't visible because of the roof)
