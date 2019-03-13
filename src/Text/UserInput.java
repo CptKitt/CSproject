@@ -11,23 +11,26 @@ public class UserInput {
 	/**
 	 *This method asks the User for a position on the map displayed in the
 	 *Interactive Text-Based version in the form: x,y.
-	 *@param no parameters
 	 *@return a Position object containing coordinate information on where the user wants a character to move
 	 */
 	public Position movementInput() {
 		Scanner userInput = new Scanner(System.in);
 		System.out.println("Please enter a position to move a character as an ordered pair, with a comma inbetween (e.g. x,y):");
 
-		String input = userInput.nextLine();
-		while (input.length() != 3) {
-			System.out.println("Please include the comma \",\" inbetween your x and y values");
-			input = userInput.nextLine();
+		while (true) {
+			try {
+				String input = userInput.nextLine();
+				String[] parts = input.split(",");
+				
+				int xCoord = Integer.parseInt(parts[0]);
+				int yCoord = Integer.parseInt(parts[1]);
+				Position inputPos = new Position(yCoord, xCoord);
+				return inputPos;
+			}
+			catch (Exception ignored) {
+				System.out.println("Please include the comma \",\" inbetween your x and y values");
+			}
 		}
-
-		int xCoord = Integer.parseInt(String.valueOf(input.charAt(0)));
-		int yCoord = Integer.parseInt(String.valueOf(input.charAt(2)));
-		Position inputPos = new Position(xCoord, yCoord);
-		return inputPos;
 	}
 
 	/**
