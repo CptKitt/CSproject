@@ -16,7 +16,7 @@ public class Display {
 
         System.out.print(" ");
         for (int i = 0; i < grid[0].length; i++){
-            System.out.print(i + " ");
+            System.out.print("  " + i + " ");
         }
 
 
@@ -24,7 +24,11 @@ public class Display {
 
         for (int i = 0; i < grid.length; i++) {
             System.out.println();
-            System.out.print(i + "");
+            if (i >= 0 && i < 10) {
+                System.out.print("0" + i + " ");
+            }else{
+                System.out.print(i + " ");
+
 
             for (int j = 0; j < grid[i].length; j++) {
 
@@ -32,12 +36,12 @@ public class Display {
                 entities = grid[i][j];
 
                 if (entities == null) {
-                    System.out.print(" ");
+                    System.out.print("    ");
                 } else if (entities instanceof Player) {
-                    System.out.print("x");
+                    System.out.print("x   ");
 
                 } else {
-                    System.out.print("#");
+                    System.out.print("#   ");
 
                 }
 
@@ -46,6 +50,7 @@ public class Display {
         }
         System.out.println();
     }
+}
 }
 
 
