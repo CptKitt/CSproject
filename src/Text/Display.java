@@ -13,30 +13,31 @@ public class Display {
         Entity[][] grid = map.getGrid();
         Entity entities;
 
-        System.out.print(" ");
 
+        System.out.print(" ");
         for (int i = 0; i < grid[0].length; i++){
             System.out.print(i + " ");
         }
+        System.out.println();
 
 
-        for (int i = 0; i < grid[i].length; i++) {
+
+        for (int i = 0; i < grid.length; i++) {
             System.out.print(i + "");
-            System.out.println();
 
-            for (int j = 0; j < grid[0].length; j++) {
-                System.out.print(i + "");
+            for (int j = 0; j < grid[i].length; j++) {
+                System.out.println();
 
-                entities = grid[i][j];
+                //entities = grid[i][j];
 
-                if (entities == null) {
-                    System.out.print(" ");
+                //if (entities == null) {
+                  //  System.out.print(" ");
 
-                } else if (entities instanceof Player) {
-                    System.out.print("x");
+                } //else if (entities instanceof Player) {
+                    //System.out.print("x");
 
-                } else {
-                    System.out.print("#");
+                }// else {
+                   // System.out.print("#");
 
                 }
 
@@ -44,10 +45,6 @@ public class Display {
             }
 
 
-        }
-    }
 
-
-}
 
 
