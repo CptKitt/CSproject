@@ -15,42 +15,40 @@ public class Display {
 
 
         System.out.print(" ");
-        for (int i = 0; i < grid[0].length; i++){
+        for (int i = 0; i < grid[0].length; i++) {
             System.out.print("  " + i + " ");
         }
-
-
 
 
         for (int i = 0; i < grid.length; i++) {
             System.out.println();
             if (i >= 0 && i < 10) {
                 System.out.print("0" + i + " ");
-            }else{
-                System.out.print(i + " ");
+            } else {
+                System.out.print(i + " ");}
 
 
-            for (int j = 0; j < grid[i].length; j++) {
+                for (int j = 0; j < grid[i].length; j++) {
 
 
-                entities = grid[i][j];
+                    entities = grid[i][j];
 
-                if (entities == null) {
-                    System.out.print("    ");
-                } else if (entities instanceof Player) {
-                    System.out.print("x   ");
+                    if (entities == null) {
+                        System.out.print("    ");
+                    } else if (entities instanceof Player) {
+                        System.out.print("x   ");
 
-                } else {
-                    System.out.print("#   ");
+                    } else {
+                        System.out.print("#   ");
+
+                    }
+
 
                 }
 
-
-            }
+            System.out.println();
         }
-        System.out.println();
     }
-}
 }
 
 
