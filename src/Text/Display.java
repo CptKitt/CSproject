@@ -19,11 +19,13 @@ public class Display {
             System.out.print(i + " ");
         }
 
-        for (int i = 0; i < grid[i].length; i++) {
-            
 
-            for (int j = 0; j < grid[j].length; j++) {
-                System.out.print(j + "");
+        for (int i = 0; i < grid[i].length; i++) {
+            System.out.print(i + "");
+            System.out.println();
+
+            for (int j = 0; j < grid[0].length; j++) {
+                System.out.print(i + "");
 
                 entities = grid[i][j];
 
