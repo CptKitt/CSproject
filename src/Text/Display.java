@@ -29,23 +29,24 @@ public class Display {
             for (int j = 0; j < grid[i].length; j++) {
 
 
-                //entities = grid[i][j];
+                entities = grid[i][j];
 
-                //if (entities == null) {
-                  //  System.out.print(" ");
+                if (entities == null) {
+                    System.out.print(" ");
+                } else if (entities instanceof Player) {
+                    System.out.print("x");
 
-                } //else if (entities instanceof Player) {
-                    //System.out.print("x");
-
-                }
-        System.out.println();
-        // else {
-                   // System.out.print("#");
+                } else {
+                    System.out.print("#");
 
                 }
 
 
             }
+        }
+        System.out.println();
+    }
+}
 
 
 
