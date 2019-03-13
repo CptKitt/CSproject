@@ -17,6 +17,7 @@ public class Display {
 		Image wall = new Image("GUI/assets/wall2.png",32,32,true,false);
 		Image space = new Image("GUI/assets/wall3.png",32,32,true,false);
 		Image highlight = new Image("GUI/assets/move_highlight.png",32,32,true,false);
+		Image shade = new Image("GUI/assets/night_overlay.png",32,32,true,false);
 
 		//entities (players, enemies)
 		Image slime = new Image("GUI/assets/green_slime.png",32,32,true,false);
@@ -45,6 +46,9 @@ public class Display {
 					g.drawImage(highlight,j*size,i*size);
 				}
 				else {
+					g.setGlobalAlpha(1-visgrid[i][j]);
+					g.drawImage(shade,j*size,i*size);
+					g.setGlobalAlpha(1);
 					g.setFill(new Color(0,0,0,1-visgrid[i][j]));
 					g.fillRect(j*size,i*size,32,32);
 				}
