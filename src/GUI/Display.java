@@ -28,14 +28,6 @@ public class Display {
 			for(int j=grid[i].length-1;j>=0;j--) {
 				g.drawImage(floor,j*size,i*size);
 
-				if (highlighted.contains(new Position(i,j))) {
-					g.drawImage(highlight,j*size,i*size);
-				}
-				else {
-					g.setFill(new Color(0,0,0,0.5));
-					g.fillRect(j*size,i*size,32,32);
-				}
-
 				//"space" is a black box (representing where the wall isn't visible because of the roof)
 				if (i<grid.length-1) {
 					if ((!(grid[i+1][j] instanceof Player) && grid[i+1][j] != null) && (!(grid[i][j] instanceof Player) && grid[i][j] != null)) {
@@ -47,6 +39,14 @@ public class Display {
 				}
 				else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {
 					g.drawImage(wall,j*size,i*size);
+				}
+
+				if (highlighted.contains(new Position(i,j))) {
+					g.drawImage(highlight,j*size,i*size);
+				}
+				else {
+					g.setFill(new Color(0,0,0,1-visgrid[i][j]));
+					g.fillRect(j*size,i*size,32,32);
 				}
 
 				if (grid[i][j] instanceof Player) {
