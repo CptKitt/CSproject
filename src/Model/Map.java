@@ -1,4 +1,4 @@
-package Model;
+package src.Model;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -386,7 +386,7 @@ public class Map implements Pathfinding.Delegate {
     private Entity newPlayer(Position position) {
     	return new Player(
     			0, 0, 0, 0, 0,
-			    position, 0, 0);
+			    position, 0, 0,0);
     }
 
 	public void pathfind() {
