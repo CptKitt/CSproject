@@ -220,7 +220,8 @@ public final class Pathfinding {
         int lowestCost = 0;
         for (HashMap.Entry<Position, PathPosition> e : history.entrySet()) {
             if (e.getKey().distanceTo(end) < closest.distanceTo(end)
-                    || e.getValue().cost < lowestCost) {
+                    || (e.getKey().distanceTo(end) == closest.distanceTo(end)
+                    && e.getValue().cost < lowestCost)) {
                 closest = e.getKey();
                 lowestCost = e.getValue().cost;
             }
