@@ -390,6 +390,7 @@ public class Map implements Pathfinding.Delegate {
 	    
 	    wallBorder();
 	    placePlayer();
+	    placeEnemies();
     }
 	
 	/** Convenience function to fill the map with walls. */

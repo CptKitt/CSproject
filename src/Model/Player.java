@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class Player extends Entity {
 	protected double EXP;
-	private double LVLlimit = this.LVL * 150; 
+	private double LVLlimit = 150; 
 	public Player(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP, double LVLlimit) {
 		super(HP, EVS, ATK, DEF, SPD, POS, LVL);
 		this.EXP = EXP;
@@ -12,9 +12,9 @@ public class Player extends Entity {
 	/** Generate a new player with random stats ranging between 1-10 **/
 	public static Player randomPlayer() {
 		Random rand = new Random();
-		double HP = (rand.nextInt(9) + 3);
+		double HP = (rand.nextInt(10) + 10);
 		double EVS = (rand.nextInt(9) + 1);
-		double ATK = (rand.nextInt(9) + 1);
+		double ATK = (rand.nextInt(5) + 5);
 		int SPD = rand.nextInt(2) + 4;
 		double DEF = (rand.nextInt(9) + 1);
 
@@ -44,6 +44,8 @@ public class Player extends Entity {
 			this.DEF = (this.DEF/ (this.LVL-1)) * this.LVL;
 			this.HP = (this.HP/ (this.LVL-1)) * this.LVL;
 			this.EVS = (this.EVS/ (this.LVL-1)) * this.LVL;
+			this.LVLlimit = this.LVL * 150;
+			System.out.println("Level up! You are now level " + LVL + ".");
 		}
 	/** Attack an enemy, dealing damage to HP depending on the player's 
 	 * attack stat and the enemy's defense stat, and add EXP if the enemy is killed.
@@ -59,7 +61,8 @@ public class Player extends Entity {
 			this.LVLup(this.EXP);
 		}
 		
-		System.out.println("Dealt " + damage + " damage!");
+		System.out.println("Dealt " + (int)damage + " damage!");
+	
 	}
 	
 	@Override

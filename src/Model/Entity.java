@@ -1,6 +1,6 @@
 package Model;
 
-public class Entity {	
+public abstract class Entity {	
 	public double maxHP;
 	public double HP;
 	public double ATK;
@@ -48,9 +48,5 @@ public class Entity {
 	 * as the Map does not know which subclass an Entity is.
 	 * @return A copy of this Entity.
 	 */
-	public Entity copy() {
-		Entity e = new Entity(maxHP, EVS, ATK, DEF, SPD, POS, LVL);
-		e.HP = HP;
-		return e;
-	}
+	public abstract Entity copy();
 }

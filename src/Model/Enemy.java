@@ -60,7 +60,7 @@ public class Enemy extends Entity {
 		double damage = (ATK * 10)/(p.DEF + 5);
 		p.setHP(p.HP - damage);
 		
-		System.out.println("Took " + damage + " damage!");
+		System.out.println("Took " + (int)damage + " damage!");
    }
 	
 	@Override
