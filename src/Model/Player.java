@@ -17,6 +17,7 @@ public class Player extends Entity {
 		double ATK = (rand.nextInt(9) + 1);
 		int SPD = rand.nextInt(2) + 4;
 		double DEF = (rand.nextInt(9) + 1);
+
 		Player player = new Player(HP, EVS, ATK, DEF, SPD, null, 1, 0, 150);
 		return player;
 	}
