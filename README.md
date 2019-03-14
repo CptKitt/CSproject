@@ -7,6 +7,7 @@ Andrew Chen, Tam Truong, Rohin Thakore, Isaacs Adeyemo, Adrian Chen
  - Navigate to /src
  - run "javac GUI/GUIMain.java"
  - run "java GUI.GUIMain"
+ 
  See Releases for a JAR packed version of the game.
 
  Instructions to compile and run Demo 1:
