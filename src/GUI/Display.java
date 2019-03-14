@@ -9,26 +9,27 @@ import javafx.scene.paint.Color;
 import java.io.File;
 
 public class Display {
+	public static final double size = 32d;
+
 	public void drawMapOnScene(Map m, GraphicsContext g, Set<Position> highlighted) {
 		Entity[][] grid = m.getGrid();
 		double[][] visgrid = m.getVisibility();
 		//environment (walls, floors, et cetera)
-		Image floor = new Image("GUI/assets/tile1.png",32,32,true,false);
-		Image wall = new Image("GUI/assets/wall2.png",32,32,true,false);
-		Image space = new Image("GUI/assets/wall3.png",32,32,true,false);
-		Image highlight = new Image("GUI/assets/move_highlight.png",32,32,true,false);
-		Image shade = new Image("GUI/assets/night_overlay.png",32,32,true,false);
+		Image floor = new Image("GUI/assets/tile1.png",size,size,true,false);
+		Image wall = new Image("GUI/assets/wall2.png",size,size,true,false);
+		Image space = new Image("GUI/assets/wall3.png",size,size,true,false);
+		Image highlight = new Image("GUI/assets/move_highlight.png",size,size,true,false);
+		Image shade = new Image("GUI/assets/night_overlay.png",size,size,true,false);
+		Image upstairs = new Image("GUI/assets/stairs_up.png",size,size,true,false);
 
 		//entities (players, enemies)
-		Image slime = new Image("GUI/assets/green_slime.png",32,32,true,false);
-		Image hero = new Image("GUI/assets/player1.png",32,32,true,false);
-
-		double size = 32d;
+		Image slime = new Image("GUI/assets/green_slime_idle.gif",size,size,true,false);
+		Image hero = new Image("GUI/assets/player1.png",size,size,true,false);
 
 		for(int i=grid.length-1;i>=0;i--) {
 			for(int j=grid[i].length-1;j>=0;j--) {
 				g.drawImage(floor,j*size,i*size);
-				
+
 				Entity e = grid[i][j];
 
 				if (e instanceof Obstacle) {
@@ -40,6 +41,9 @@ public class Display {
                         g.drawImage(wall,j*size,i*size);
                     }
                 }
+				else if (e instanceof Stairs) {
+					g.drawImage(upstairs,j*size,i*size);
+				}
 				else if (e instanceof Enemy) {
 					g.drawImage(slime,j*size,i*size);
 				}
@@ -55,7 +59,7 @@ public class Display {
 					g.drawImage(shade,j*size,i*size);
 					g.setGlobalAlpha(1);
 					g.setFill(new Color(0,0,0,1-visgrid[i][j]));
-					g.fillRect(j*size,i*size,32,32);
+					g.fillRect(j*size,i*size,size,size);
 				}
 
 			}
