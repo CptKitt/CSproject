@@ -1,6 +1,10 @@
 package Model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class Enemy extends Entity {
 	public Enemy(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP) {
@@ -13,20 +17,50 @@ public class Enemy extends Entity {
 		double HP = rand.nextInt(10) * multiplier;
 		double EVS = rand.nextInt(10) * multiplier;
 		double ATK = rand.nextInt(10) * multiplier;
-		int SPD = rand.nextInt(3);
+		int SPD = rand.nextInt(3) + 1;
 		double DEF = rand.nextInt(10) * multiplier;
 		Enemy enemy = new Enemy(HP, EVS, ATK, DEF, SPD, null, 0, 0);
 		return enemy;
 	}
+	
 	/** Takes a map, and returns a position for the enemy to move to. **/
 	public Position makeMove(Map map) {
-		return null;
+		Set<Position> moves = map.possibleMovesForEnemy(POS);
+		if (moves.isEmpty()) {
+			return POS;
+		}
+		
+		// check through players in map
+		for (Player player : map.getPlayers()) {
+			// player in range and in line of sight
+			if (Pathfinding.shortestPath(map, POS, player.POS).size() < 6
+					&& Pathfinding.lineOfSight(map, POS, player.POS)) {
+				// attack if in range
+				if (moves.contains(player.POS)) {
+					return player.POS;
+				}
+				// path towards player
+				List<Position> path = Pathfinding.shortestPath(map, POS, player.POS);
+				Collections.reverse(path);
+				for (Position pos : path) {
+					if (moves.contains(pos)) {
+						return pos;
+					}
+				}
+			}
+		}
+		
+		// no player found: return random move in range
+		return new ArrayList<>(moves).get(new Random().nextInt(moves.size()));
 	}
+	
 	/** Attacks a player, and subtracts HP from them based on the Enemy's attack and the Player's defense. **/
 	public void attack(Player p) {
 		double ATK = this.ATK;
 		double Multiplier = this.LVL / 2;
 		double damage = ATK * Multiplier - (p.DEF / 2);
 		p.setHP(p.HP - damage);
+		
+		System.out.println("Took " + damage + " damage!");
    }
 }

@@ -28,19 +28,24 @@ public class Display {
 		for(int i=grid.length-1;i>=0;i--) {
 			for(int j=grid[i].length-1;j>=0;j--) {
 				g.drawImage(floor,j*size,i*size);
+				
+				Entity e = grid[i][j];
 
-				//"space" is a black box (representing where the wall isn't visible because of the roof)
-				if (i<grid.length-1) {
-					if ((!(grid[i+1][j] instanceof Player) && grid[i+1][j] != null) && (!(grid[i][j] instanceof Player) && grid[i][j] != null)) {
-						g.drawImage(space,j*size,i*size);
-					}
-					else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {
-						g.drawImage(wall,j*size,i*size);
-					}
+				if (e instanceof Obstacle) {
+                    //"space" is a black box (representing where the wall isn't visible because of the roof)
+                    if (i<grid.length-1 && grid[i+1][j] instanceof Obstacle) {
+                        g.drawImage(space,j*size,i*size);
+                    }
+                    else {
+                        g.drawImage(wall,j*size,i*size);
+                    }
+                }
+				else if (e instanceof Enemy) {
+					g.drawImage(slime,j*size,i*size);
 				}
-				else if (!(grid[i][j] instanceof Player) && grid[i][j] != null) {
-					g.drawImage(wall,j*size,i*size);
-				}
+                else if (grid[i][j] instanceof Player) {
+                    g.drawImage(hero,j*size,i*size);
+                }
 
 				if (highlighted.contains(new Position(i,j))) {
 					g.drawImage(highlight,j*size,i*size);
@@ -53,13 +58,6 @@ public class Display {
 					g.fillRect(j*size,i*size,32,32);
 				}
 
-				if (grid[i][j] instanceof Player) {
-					g.drawImage(hero,j*size,i*size);
-				}
-				//TODO: add Enemy class
-				/*else if (grid[i][j] instanceof Enemy) {
-					g.drawImage(slime,j*size,i*size);
-				}*/
 			}
 		}
 	}

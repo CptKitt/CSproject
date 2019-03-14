@@ -15,7 +15,7 @@ public class Player extends Entity {
 		double HP = rand.nextInt(10);
 		double EVS = rand.nextInt(10);
 		double ATK = rand.nextInt(10);
-		int SPD = rand.nextInt(3);
+		int SPD = rand.nextInt(2) + 4;
 		double DEF = rand.nextInt(10);
 		Player player = new Player(HP, EVS, ATK, DEF, SPD, null, 1, 0, 150);
 		return player;
@@ -58,6 +58,8 @@ public class Player extends Entity {
 		if(this.EXP > this.LVLlimit) {
 			this.LVLup(this.EXP);
 		}
+		
+		System.out.println("Dealt " + damage + " damage!");
 	}
 	
 	}
