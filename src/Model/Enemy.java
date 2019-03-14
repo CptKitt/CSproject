@@ -14,12 +14,12 @@ public class Enemy extends Entity {
 	public static Enemy randomEnemy(Player p) {
 		int multiplier = p.getLVL();
 		Random rand = new Random();
-		double HP = (rand.nextInt(9) + 1) * multiplier;
+		double HP = (rand.nextInt(9) + 3) * multiplier;
 		double EVS = (rand.nextInt(9) + 1) * multiplier;
 		double ATK = (rand.nextInt(9) + 1) * multiplier;
 		int SPD = rand.nextInt(3) + 1;
 		double DEF = (rand.nextInt(9) + 1) * multiplier;
-		Enemy enemy = new Enemy(HP, EVS, ATK, DEF, SPD, null, 0, 0);
+		Enemy enemy = new Enemy(HP, EVS, ATK, DEF, SPD, null, 1, 0);
 		return enemy;
 	}
 	
@@ -57,8 +57,7 @@ public class Enemy extends Entity {
 	/** Attacks a player, and subtracts HP from them based on the Enemy's attack and the Player's defense. **/
 	public void attack(Player p) {
 		double ATK = this.ATK;
-		double Multiplier = this.LVL / 2;
-		double damage = ATK * Multiplier - (p.DEF / 2);
+		double damage = (ATK * 10)/(p.DEF + 5);
 		p.setHP(p.HP - damage);
 		
 		System.out.println("Took " + damage + " damage!");
