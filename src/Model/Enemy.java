@@ -63,4 +63,11 @@ public class Enemy extends Entity {
 		
 		System.out.println("Took " + damage + " damage!");
    }
+	
+	@Override
+	public Entity copy() {
+		Enemy e = new Enemy(maxHP, EVS, ATK, DEF, SPD, POS, LVL, 0);
+		e.HP = HP;
+		return e;
+	}
 }

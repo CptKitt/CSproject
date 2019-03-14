@@ -62,6 +62,12 @@ public class Player extends Entity {
 		System.out.println("Dealt " + damage + " damage!");
 	}
 	
+	@Override
+	public Entity copy() {
+		Player p = new Player(maxHP, EVS, ATK, DEF, SPD, POS, LVL, EXP, LVLlimit);
+		p.HP = HP;
+		return p;
 	}
+}
 	
 

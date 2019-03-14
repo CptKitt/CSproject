@@ -65,8 +65,7 @@ public class Map implements Pathfinding.Delegate {
 		Entity[][] copy = new Entity[getWidth()][getHeight()];
 		for (int x = 0; x < getWidth(); x++) {
 			for (int y = 0; y < getHeight(); y++) {
-				// TODO: create a new entity rather than copy reference
-				copy[x][y] = entities[x][y];
+				copy[x][y] = entities[x][y].copy();
 			}
 		}
 		return copy;
@@ -91,8 +90,7 @@ public class Map implements Pathfinding.Delegate {
 	public List<Player> getPlayers() {
 		List<Player> copy = new ArrayList<>();
 		for (Player p : players) {
-			// TODO: init new player
-			copy.add(p);
+			copy.add((Player) p.copy());
 		}
 		return copy;
 	}
@@ -103,8 +101,7 @@ public class Map implements Pathfinding.Delegate {
 	public List<Enemy> getEnemies() {
 		List<Enemy> copy = new ArrayList<>();
 		for (Enemy e : enemies) {
-			// TODO: copy enemy
-			copy.add(e);
+			copy.add((Enemy) e.copy());
 		}
 		return copy;
 	}
