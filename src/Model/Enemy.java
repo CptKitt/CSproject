@@ -14,11 +14,13 @@ public class Enemy extends Entity {
 	public static Enemy randomEnemy(Player p) {
 		int multiplier = p.getLVL();
 		Random rand = new Random();
-		double HP = rand.nextInt(10) * multiplier;
-		double EVS = rand.nextInt(10) * multiplier;
-		double ATK = rand.nextInt(10) * multiplier;
+
+		double HP = (rand.nextInt(9) + 1) * multiplier;
+		double EVS = (rand.nextInt(9) + 1) * multiplier;
+		double ATK = (rand.nextInt(9) + 1) * multiplier;
 		int SPD = rand.nextInt(3) + 1;
-		double DEF = rand.nextInt(10) * multiplier;
+		double DEF = (rand.nextInt(9) + 1) * multiplier;
+
 		Enemy enemy = new Enemy(HP, EVS, ATK, DEF, SPD, null, 0, 0);
 		return enemy;
 	}

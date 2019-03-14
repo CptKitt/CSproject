@@ -12,11 +12,13 @@ public class Player extends Entity {
 	/** Generate a new player with random stats ranging between 1-10 **/
 	public static Player randomPlayer() {
 		Random rand = new Random();
-		double HP = rand.nextInt(10);
-		double EVS = rand.nextInt(10);
-		double ATK = rand.nextInt(10);
+
+		double HP = (rand.nextInt(9) + 1);
+		double EVS = (rand.nextInt(9) + 1);
+		double ATK = (rand.nextInt(9) + 1);
 		int SPD = rand.nextInt(2) + 4;
-		double DEF = rand.nextInt(10);
+		double DEF = (rand.nextInt(9) + 1);
+
 		Player player = new Player(HP, EVS, ATK, DEF, SPD, null, 1, 0, 150);
 		return player;
 	}
