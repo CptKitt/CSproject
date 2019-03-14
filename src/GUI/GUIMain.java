@@ -111,10 +111,6 @@ public class GUIMain extends Application {
 			possibleMoves.clear();
 		}
 
-		// TODO: remove debug line, send possibleActions to Display
-		System.out.println("clicked x:" + e.getSceneX()
-				+ ", y:" + e.getSceneY());
-
 		// update display
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
