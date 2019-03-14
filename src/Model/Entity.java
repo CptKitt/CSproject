@@ -1,15 +1,15 @@
-package Model;
+package src.Model;
 
 public class Entity {	
 	public double HP;
 	public double ATK;
 	public double DEF;
-	public double SPD;
+	public int SPD;
 	public double EVS;
 	public int LVL;
 	public Position POS;
 	
-	public Entity(double HP, double EVS, double ATK, double DEF, double SPD, Position POS, int LVL) {
+	public Entity(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL) {
 		this.HP = HP;
 		this.EVS = EVS;
 		this.ATK = ATK;
@@ -30,7 +30,7 @@ public class Entity {
 	public void setDEF(double DEF) {
 		this.DEF = DEF;
 	}
-	public void setSPD(double SPD) {
+	public void setSPD(int SPD) {
 		this.SPD = SPD;
 	}
 	public void setPOS(Position POS) {
