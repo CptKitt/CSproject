@@ -1,4 +1,4 @@
-package src.Model;
+package Model;
 
 /**
  * Represents an integer point on a 2D grid.
