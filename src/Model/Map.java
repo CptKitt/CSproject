@@ -41,8 +41,16 @@ public class Map implements Pathfinding.Delegate {
 	
 	/** Held reference to Stairs. */
 	private Stairs stairs;
-	
-	/** Creates a 10x10 Map. */
+    
+    /** The type of the Map. */
+	private Type type;
+    
+    /** @return The type of the Map. */
+    public Type getType() {
+        return type;
+    }
+    
+    /** Creates a 10x10 Map. */
 	public Map() {
 		this(10, 10);
 	}
@@ -827,4 +835,9 @@ public class Map implements Pathfinding.Delegate {
 		
 		return !(entities[p.x][p.y] instanceof Obstacle);
 	}
+    
+    /** Types of Maps. */
+	enum Type {
+	    CAVE, DUNGEON, TOWER
+    }
 }
