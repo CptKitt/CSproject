@@ -12,8 +12,7 @@ public class Player extends Entity {
 	/** Generate a new player with random stats ranging between 1-10 **/
 	public static Player randomPlayer() {
 		Random rand = new Random();
-
-		double HP = (rand.nextInt(9) + 1);
+		double HP = (rand.nextInt(9) + 3);
 		double EVS = (rand.nextInt(9) + 1);
 		double ATK = (rand.nextInt(9) + 1);
 		int SPD = rand.nextInt(2) + 4;
@@ -51,8 +50,7 @@ public class Player extends Entity {
 	 * Also determine if the player will level up based on their EXP. **/
 	public void attack(Enemy e) {
 		double ATK = this.ATK;
-		double Multiplier = this.LVL / 2;
-		double damage = ATK * Multiplier - (e.DEF / 2);
+		double damage = (ATK * 10)/(e.DEF + 5);
 		e.setHP(e.HP - damage);
 		if((e.HP - damage) < 0) {
 			this.addEXP(e.LVL * 50);
