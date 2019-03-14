@@ -39,6 +39,9 @@ public class Map implements Pathfinding.Delegate {
 	 */
 	private List<Enemy> enemies;
 	
+	/** Held reference to Stairs. */
+	private Stairs stairs;
+	
 	/** Creates a 10x10 Map. */
 	public Map() {
 		this(10, 10);
@@ -91,8 +94,8 @@ public class Map implements Pathfinding.Delegate {
 	 */
 	public List<Player> getPlayers() {
 		List<Player> copy = new ArrayList<>();
-		for (Player p : players) {
-			copy.add((Player) p.copy());
+		for (Player player : players) {
+			copy.add((Player) player.copy());
 		}
 		return copy;
 	}
@@ -102,8 +105,8 @@ public class Map implements Pathfinding.Delegate {
 	 */
 	public List<Enemy> getEnemies() {
 		List<Enemy> copy = new ArrayList<>();
-		for (Enemy e : enemies) {
-			copy.add((Enemy) e.copy());
+		for (Enemy enemy : enemies) {
+			copy.add((Enemy) enemy.copy());
 		}
 		return copy;
 	}
@@ -115,8 +118,8 @@ public class Map implements Pathfinding.Delegate {
 		// look for players
 		for (int x = 0; x < getWidth(); x++) {
 			for (int y = 0; y < getHeight(); y++) {
-				Entity e = entities[x][y];
-				if (e instanceof Player) {
+				Entity entity = entities[x][y];
+				if (entity instanceof Player) {
 					toUpdate.add(new Position(x, y));
 				}
 			}
@@ -124,27 +127,26 @@ public class Map implements Pathfinding.Delegate {
 		
 		// go through each player position
 		for (Position pos: toUpdate) {
-			for (Position p : Pathfinding.visibility(this, pos, 7)) {
+			for (Position pos2 : Pathfinding.visibility(this, pos, 7)) {
 				// check OOB
-				if (p.x < 0 || p.x >= getWidth() || p.y < 0 || p.y >= getHeight()) {
+				if (pos2.x < 0 || pos2.x >= getWidth() || pos2.y < 0 || pos2.y >= getHeight()) {
 					continue;
 				}
 				
 				// parabolic opacity curve
-				double dist = pos.distanceTo(p);
+				double dist = pos.distanceTo(pos2);
 				double opacity = Math.min(1, -Math.pow(dist / 7, 2) + 1.1);
-				visibility[p.x][p.y] = Math.max(opacity, visibility[p.x][p.y]);
+				visibility[pos2.x][pos2.y] = Math.max(opacity, visibility[pos2.x][pos2.y]);
 			}
 		}
 	}
     
     /** Creates a random map. */
 	public void populateGrid() {
-		players.clear();
 		enemies.clear();
 		visibility = new double[getWidth()][getHeight()];
 		
-	    switch (rand.nextInt(4)) {
+	    switch (rand.nextInt(3)) {
             case 0: generateCave(); break;
             case 1: generateCircle(); break;
             case 2: generateDungeon(); break;
@@ -171,8 +173,9 @@ public class Map implements Pathfinding.Delegate {
         }
         
         wallBorder();
-        placePlayer();
-        placeEnemies();
+		placePlayer();
+		placeStairs();
+		placeEnemies();
     }
     
     /**
@@ -182,16 +185,16 @@ public class Map implements Pathfinding.Delegate {
      */
     public void generateCircle() {
     	// calculate room dimensions
-    	double cx = (double) getWidth() / 2;
-    	double cy = (double) getHeight() / 2;
-		double width = cx - 1;
-	    double height = cy - 1;
+    	double centerX = (double) getWidth() / 2;
+    	double centerY = (double) getHeight() / 2;
+		double width = centerX - 1;
+	    double height = centerY - 1;
 		
 	    // run ellipse calculations
 		for (int x = 0; x < getWidth(); x++) {
             for (int y = 0; y < getHeight(); y++) {
-                double dx = x - cx + 0.5;
-                double dy = y - cy + 0.5;
+                double dx = x - centerX + 0.5;
+                double dy = y - centerY + 0.5;
                 
                 // inside ellipse, empty space
                 if (Math.pow(dx / width, 2) + Math.pow(dy / height, 2) < 1) {
@@ -204,7 +207,8 @@ public class Map implements Pathfinding.Delegate {
 		}
 	
 	    placePlayer();
-		placeEnemies();
+	    placeStairs();
+	    placeEnemies();
     }
     
     /**
@@ -297,27 +301,28 @@ public class Map implements Pathfinding.Delegate {
 		List<Room> connected = new ArrayList<>();
 		connected.add(rooms.get(0));
 		
-		for (Room r : rooms) {
+		for (Room room : rooms) {
 			if (connected.isEmpty()) {
-				connected.add(r);
+				connected.add(room);
 				continue;
 			}
 			
 			// pick random connected room
-			Room r2 = connected.get(rand.nextInt(connected.size()));
-			connected.add(r);
+			Room room2 = connected.get(rand.nextInt(connected.size()));
+			connected.add(room);
 			
-			Position start = r.randomPosition();
-			Position end = r2.randomPosition();
+			Position start = room.randomPosition();
+			Position end = room2.randomPosition();
 			
 			// find path and clear
-			for (Position p : Pathfinding.shortestPath(p -> true, start, end)) {
-				entities[p.x][p.y] = null;
+			for (Position pos : Pathfinding.shortestPath(p -> true, start, end)) {
+				entities[pos.x][pos.y] = null;
 			}
 		}
-		
-		placePlayer();
-		placeEnemies();
+	
+	    placePlayer();
+	    placeStairs();
+	    placeEnemies();
     }
     
     /**
@@ -364,14 +369,14 @@ public class Map implements Pathfinding.Delegate {
 		    }
 	        
 	        // clear around line
-		    for (Position p : line) {
+		    for (Position pos : line) {
 		    	double radius = Math.sqrt(rand.nextInt(20));
 			    
 			    // inefficiently check all tiles
 			    for (int x = 0; x < getWidth(); x++) {
 			    	for (int y = 0; y < getHeight(); y++) {
-			    		double dx = Math.pow(x - p.x, 2);
-			    		double dy = Math.pow(y - p.y, 2);
+			    		double dx = Math.pow(x - pos.x, 2);
+			    		double dy = Math.pow(y - pos.y, 2);
 			    		
 			    		// inside radius, clear wall
 			    		if (dx + dy < radius) {
@@ -389,8 +394,9 @@ public class Map implements Pathfinding.Delegate {
         } while (rand.nextInt(100) < probability);
 	    
 	    wallBorder();
-	    placePlayer();
-	    placeEnemies();
+        placePlayer();
+        placeStairs();
+        placeEnemies();
     }
 	
 	/** Convenience function to fill the map with walls. */
@@ -417,17 +423,45 @@ public class Map implements Pathfinding.Delegate {
 	
 	/** Convenience function to place the character on the Map. */
     private void placePlayer() {
-    	Position p;
-    	do {
-    		p = new Position(
-    				rand.nextInt(getWidth()),
+    	// random starting point
+	    Position pos;
+	    do {
+		    pos = new Position(
+				    rand.nextInt(getWidth()),
 				    rand.nextInt(getHeight()));
-	    } while (entities[p.x][p.y] != null);
-    	entities[p.x][p.y] = newPlayer(p);
-	
-	    Player player = newPlayer(p);
-	    players.add(player);
-	    entities[p.x][p.y] = player;
+	    } while (entities[pos.x][pos.y] != null);
+	    
+	    // place new player
+    	if (players.isEmpty()) {
+		    entities[pos.x][pos.y] = newPlayer(pos);
+		
+		    Player player = newPlayer(pos);
+		    players.add(player);
+		    entities[pos.x][pos.y] = player;
+	    }
+    	// place existing players nearby
+    	else {
+    		// try to place as close as possible
+    		Deque<Position> tiles = new ArrayDeque<>();
+    		tiles.addLast(pos);
+    		
+    		for (Player player : players) {
+    			while (true) {
+    				// poll and add adjacent to queue
+    				Position newPos = tiles.pollFirst();
+    				for (Position adjPos : newPos.adjacentPositions()) {
+    					tiles.addLast(adjPos);
+				    }
+    				
+    				// empty space, place player
+    				if (entities[newPos.x][newPos.y] == null) {
+    					entities[newPos.x][newPos.y] = player;
+    					player.setPOS(newPos);
+    					break;
+				    }
+			    }
+		    }
+	    }
     }
 	
 	/** Convenience function to place enemies on the Map. */
@@ -435,18 +469,36 @@ public class Map implements Pathfinding.Delegate {
 		int num = rand.nextInt(5) + 3;
 		
 		for (int i = 0; i < num; i++) {
-			Position p = new Position(
+			Position pos = new Position(
 					rand.nextInt(getWidth()),
 					rand.nextInt(getHeight()));
 			
-			if (entities[p.x][p.y] != null ||
-					players.stream().anyMatch(pl -> pl.POS.distanceTo(p) < 6)) {
+			if (entities[pos.x][pos.y] != null ||
+					players.stream().anyMatch(pl -> pl.POS.distanceTo(pos) < 6)) {
 				i--;
 			}
 			else {
-				Enemy e = newEnemy(p);
-				enemies.add(e);
-				entities[p.x][p.y] = e;
+				Enemy enemy = newEnemy(pos);
+				enemies.add(enemy);
+				entities[pos.x][pos.y] = enemy;
+			}
+		}
+	}
+	
+	/** Convenience function to place stairs on the Map. */
+	private void placeStairs() {
+		// random starting point
+		while (true) {
+			Position pos = new Position(
+					rand.nextInt(getWidth()),
+					rand.nextInt(getHeight()));
+			
+			// not covered and far enough away from players
+			if (entities[pos.x][pos.y] == null && players.stream()
+					.allMatch(player -> player.POS.distanceTo(pos) > 8)) {
+				stairs = newStairs(pos);
+				entities[pos.x][pos.y] = stairs;
+				break;
 			}
 		}
 	}
@@ -481,11 +533,16 @@ public class Map implements Pathfinding.Delegate {
 		int range = entities[p.x][p.y].SPD;
 		
 		// add enemy attacks
-		moves.addAll(enemies.stream().map(e -> e.POS).filter(e ->
+		moves.addAll(enemies.stream().map(enemy -> enemy.POS).filter(pos ->
 				// enemy in range of attack and open square next to the position
-				Pathfinding.shortestPath(this, p, e).size() < range
-						&& moves.stream().anyMatch(p2 -> p2.distanceTo(e) == 1)
+				Pathfinding.shortestPath(this, p, pos).size() < range
+						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
+		
+		// add stairs
+		if (Pathfinding.shortestPath(this, p, stairs.POS).size() < range) {
+			moves.add(stairs.POS);
+		}
 		
 		return moves;
 	}
@@ -507,11 +564,11 @@ public class Map implements Pathfinding.Delegate {
 		int range = entities[p.x][p.y].SPD;
 		
 		// add player attacks
-		for (Player e : players) {
+		for (Player player : players) {
 			// enemy in range of attack and open square next to the position
-			if (Pathfinding.shortestPath(this, p, e.POS).size() <= range
-					&& moves.stream().anyMatch(p2 -> p2.distanceTo(e.POS) == 1)) {
-				moves.add(e.POS);
+			if (Pathfinding.shortestPath(this, p, player.POS).size() <= range
+					&& moves.stream().anyMatch(p2 -> p2.distanceTo(player.POS) == 1)) {
+				moves.add(player.POS);
 			}
 		}
 		
@@ -538,44 +595,58 @@ public class Map implements Pathfinding.Delegate {
 	 * @return Whether the action was valid or not.
 	 */
 	public boolean processAction(Position p1, Position p2) {
+		// invalid
+		if (p1 == null || p2 == null) {
+			return false;
+		}
 		// destination is the entity, ignore
-		if (p1.equals(p2)) {
+		else if (p1.equals(p2)) {
 			return false;
 		}
+		
+		Entity entity1 = entities[p1.x][p1.y];
+		Entity entity2 = entities[p2.x][p2.y];
+		
 		// no character selected, ignore
-		else if (!(entities[p1.x][p1.y] instanceof Player)) {
+		if (!(entity1 instanceof Player)) {
 			return false;
 		}
+		
+		Player player = (Player) entity1;
+		
 		// not a possible move, ignore
-		else if (!possibleMovesForCharacter(p1).contains(p2)) {
+		if (!possibleMovesForCharacter(p1).contains(p2)) {
 			return false;
+		}
+		// move to stairs
+		else if (entity2 instanceof Stairs) {
+			// refresh map
+			populateGrid();
 		}
 		// destination is an enemy
-		else if (entities[p2.x][p2.y] instanceof Enemy) {
+		else if (entity2 instanceof Enemy) {
 			// not close enough
 			if (p1.distanceTo(p2) != 1) {
 				// move character next to other entity
 				Position toMove = new Position(1000, 1000);
-				for (Position p : possibleMovesForCharacter(p1)) {
-					if (p.distanceTo(p2) == 1 && entities[p.x][p.y] == null
-							&& p.distanceTo(p1) < toMove.distanceTo(p1)) {
-						toMove = p;
+				for (Position pos : possibleMovesForCharacter(p1)) {
+					if (pos.distanceTo(p2) == 1 && entities[pos.x][pos.y] == null
+							&& pos.distanceTo(p1) < toMove.distanceTo(p1)) {
+						toMove = pos;
 					}
 				}
-				entities[toMove.x][toMove.y] = entities[p1.x][p1.y];
+				entities[toMove.x][toMove.y] = player;
 				entities[p1.x][p1.y] = null;
-				entities[toMove.x][toMove.y].setPOS(toMove);
-				p1 = toMove;
+				player.setPOS(toMove);
 			}
 			
 			// ask player to attack enemy
-			Enemy e = (Enemy) entities[p2.x][p2.y];
-			Player player = (Player) entities[p1.x][p1.y];
-			player.attack(e);
+			Enemy enemy = (Enemy) entity2;
+			player.attack(enemy);
 			
 			// killed enemy, remove
-			if (e.HP <= 0) {
-				enemies.remove(e);
+			if (enemy.HP <= 0) {
+				enemies.remove(enemy);
 				entities[p2.x][p2.y] = null;
 				System.out.println("You defeated the enemy!");
 			}
@@ -583,9 +654,9 @@ public class Map implements Pathfinding.Delegate {
 		// destination is an empty space
 		else {
 			// move character
-			entities[p2.x][p2.y] = entities[p1.x][p1.y];
+			entities[p2.x][p2.y] = player;
 			entities[p1.x][p1.y] = null;
-			entities[p2.x][p2.y].setPOS(p2);
+			player.setPOS(p2);
 		}
 		
 		// action successfully completed, finish
@@ -603,11 +674,11 @@ public class Map implements Pathfinding.Delegate {
 		}
 		
 		for (int i = 0; i < enemies.size(); i++) {
-			Enemy e = enemies.get(i);
-			Position p1 = e.POS;
+			Enemy enemy = enemies.get(i);
+			Position p1 = enemy.POS;
 			
 			// ask enemy for move
-			Position p2 = e.makeMove(this);
+			Position p2 = enemy.makeMove(this);
 			
 			// invalid move
 			if (p2 == null || p1.equals(p2)
@@ -617,18 +688,18 @@ public class Map implements Pathfinding.Delegate {
 			
 			// empty space
 			if (entities[p2.x][p2.y] == null) {
-				entities[p2.x][p2.y] = e;
+				entities[p2.x][p2.y] = enemy;
 				entities[p1.x][p1.y] = null;
-				e.setPOS(p2);
+				enemy.setPOS(p2);
 			}
 			else if (entities[p2.x][p2.y] instanceof Player) {
 				if (p1.distanceTo(p2) != 1) {
 					// move enemy next to Player
 					Position toMove = Position.NONE;
-					for (Position p : possibleMovesForEnemy(p1)) {
-						if (p.distanceTo(p2) == 1 && entities[p.x][p.y] == null
-								&& p.distanceTo(p1) < toMove.distanceTo(p1)) {
-							toMove = p;
+					for (Position pos : possibleMovesForEnemy(p1)) {
+						if (pos.distanceTo(p2) == 1 && entities[pos.x][pos.y] == null
+								&& pos.distanceTo(p1) < toMove.distanceTo(p1)) {
+							toMove = pos;
 						}
 					}
 					if (!toMove.equals(Position.NONE)) {
@@ -640,7 +711,7 @@ public class Map implements Pathfinding.Delegate {
 				
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
-				e.attack(player);
+				enemy.attack(player);
 				
 				// game over (?)
 				if (player.HP <= 0) {
@@ -710,27 +781,32 @@ public class Map implements Pathfinding.Delegate {
 	    return entities.length == 0 ? 0 : entities[0].length;
     }
 	
-	/** Temporary function to create a wall. */
+	/** Function to create stairs. */
+    private Stairs newStairs(Position position) {
+    	Stairs stairs = new Stairs();
+    	stairs.setPOS(position);
+    	return stairs;
+    }
+	
+	/** Function to create a wall. */
 	private Obstacle newWall(Position position) {
-		return new Obstacle(
-				0, 0, 0, 0, 0,
-				position, 0);
+		Obstacle obstacle = new Obstacle();
+		obstacle.setPOS(position);
+		return obstacle;
 	}
 	
-	/** Temporary function to return a player. */
+	/** Function to return a player. */
 	private Player newPlayer(Position position) {
-		Player p = Player.randomPlayer();
-		p.setPOS(position);
-		return p;
+		Player player = Player.randomPlayer();
+		player.setPOS(position);
+		return player;
 	}
 	
-	/**
-	 * Temporary function to return an enemy.
-	 */
+	/** Function to return an enemy. */
 	private Enemy newEnemy(Position position) {
-		Enemy e = Enemy.randomEnemy(players.get(0));
-		e.setPOS(position);
-		return e;
+		Enemy enemy = Enemy.randomEnemy(players.get(0));
+		enemy.setPOS(position);
+		return enemy;
 	}
 	
 	@Override
@@ -739,7 +815,8 @@ public class Map implements Pathfinding.Delegate {
 			return false;
 		}
 		
-		return entities[p.x][p.y] == null || entities[p.x][p.y] instanceof Player;
+		Entity entity = entities[p.x][p.y];
+		return entity == null || entity instanceof Player;
 	}
 	
 	@Override
