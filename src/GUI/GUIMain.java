@@ -106,8 +106,8 @@ public class GUIMain extends Application {
 		}
 		// second click: try performing action
 		else {
-			if (map.processAction(selectedPosition, p)) {
-				map.processEnemyMoves();
+			if (map.processAction(selectedPosition, p) != null) {
+				map.endTurn();
 			}
 			selectedPosition = null;
 			possibleMoves.clear();
