@@ -294,7 +294,8 @@ public final class Map implements Pathfinding.Delegate {
 		).collect(Collectors.toList()));
 		
 		// add stairs
-		if (Pathfinding.shortestPath(this, p, stairs.POS).size() < range) {
+		if (Pathfinding.shortestPath(this, p, stairs.POS).size() < range
+				&& moves.stream().anyMatch(pos -> pos.distanceTo(stairs.POS) == 1)) {
 			moves.add(stairs.POS);
 		}
 		
