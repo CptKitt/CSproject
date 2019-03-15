@@ -10,8 +10,22 @@ public class Turn {
     
     Turn() {
         path = null;
-        start = Position.NONE;
-        end = Position.NONE;
+        start = null;
+        end = null;
         attackPos = null;
+    }
+    
+    public void pathfind(Map map) {
+        if (start == null || end == null) {
+            return;
+        }
+        path = Pathfinding.shortestPath(map, start, end);
+    }
+    
+    Turn(Map map, Position start, Position end, Position attackPos) {
+        path = Pathfinding.shortestPath(map, start, end);
+        this.start = start;
+        this.end = end;
+        this.attackPos = attackPos;
     }
 }
