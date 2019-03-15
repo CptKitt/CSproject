@@ -137,7 +137,7 @@ public final class Map implements Pathfinding.Delegate {
 		for (Position pos: toUpdate) {
 			for (Position pos2 : Pathfinding.visibility(this, pos, 7)) {
 				// check OOB
-				if (pos2.x < 0 || pos2.x >= getWidth() || pos2.y < 0 || pos2.y >= getHeight()) {
+				if (!positionOnMap(pos2)) {
 					continue;
 				}
 				
@@ -154,22 +154,22 @@ public final class Map implements Pathfinding.Delegate {
 		enemies.clear();
 		visibility = new double[getWidth()][getHeight()];
 		
-	    switch (rand.nextInt(3)) {
-            case 0:
-                entities = MapGenerator.generateCave(getWidth(), getHeight());
-                break;
-            case 1:
-                entities = MapGenerator.generateCircle(getWidth(), getHeight());
-                break;
-            case 2:
-                entities = MapGenerator.generateDungeon(getWidth(), getHeight());
-                break;
-            default:
-                break;
-        }
-        
-        placePlayer();
-	    placeStairs();
+		int num = rand.nextInt(3);
+		if (num == 0) {
+			entities = MapGenerator.generateCave(getWidth(), getHeight());
+		}
+		else if (num == 1) {
+			entities = MapGenerator.generateCircle(getWidth(), getHeight());
+		}
+		else if (num == 2) {
+			entities = MapGenerator.generateDungeon(getWidth(), getHeight());
+		}
+		else {
+			entities = MapGenerator.generateRandom(getWidth(), getHeight());
+		}
+  
+		placePlayer();
+		placeStairs();
 	    placeEnemies();
         
         updateVisibility();
@@ -228,7 +228,8 @@ public final class Map implements Pathfinding.Delegate {
 					rand.nextInt(getHeight()));
 			
 			if (entities[pos.x][pos.y] != null ||
-					players.stream().anyMatch(pl -> pl.POS.distanceTo(pos) < 6)) {
+					players.stream().anyMatch(
+							player -> player.POS.distanceTo(pos) < 6)) {
 				i--;
 			}
 			else {
@@ -290,12 +291,14 @@ public final class Map implements Pathfinding.Delegate {
 		moves.addAll(enemies.stream().map(enemy -> enemy.POS).filter(pos ->
 				// enemy in range of attack and open square next to the position
 				Pathfinding.shortestPath(this, p, pos).size() < range
-						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
+						&& moves.stream().anyMatch(
+								pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
 		
 		// add stairs
 		if (Pathfinding.shortestPath(this, p, stairs.POS).size() < range
-				&& moves.stream().anyMatch(pos -> pos.distanceTo(stairs.POS) == 1)) {
+				&& moves.stream().anyMatch(
+						pos -> pos.distanceTo(stairs.POS) == 1)) {
 			moves.add(stairs.POS);
 		}
 		
@@ -347,7 +350,8 @@ public final class Map implements Pathfinding.Delegate {
 	 * Attempts to process an action.
 	 * @param p1 The Entity performing the action.
 	 * @param p2 The destination Position for the action.
-	 * @return Whether the action was valid or not.
+	 * @return A Turn representing the action taken,
+	 * or null if no changes occurred.
 	 */
 	public Turn processAction(Position p1, Position p2) {
 		// invalid
@@ -400,8 +404,8 @@ public final class Map implements Pathfinding.Delegate {
 			
 			// ask player to attack enemy
 			Enemy enemy = (Enemy) entity2;
-			player.attack(enemy);
 			turn.attackPos = enemy.POS;
+			player.attack(enemy);
 			
 			// killed enemy, remove
 			if (enemy.HP <= 0) {
@@ -427,6 +431,7 @@ public final class Map implements Pathfinding.Delegate {
 	}
 	
 	/**
+	 * Ends Player actions and processes Enemy Turns.
 	 * @return A List of actions that were taken by enemies.
 	 */
 	public List<Turn> endTurn() {
@@ -442,8 +447,13 @@ public final class Map implements Pathfinding.Delegate {
 			return new ArrayList<>();
 		}
 		
+		List<Turn> turns = new ArrayList<>();
+		
 		for (Enemy enemy : enemies) {
+			Turn turn = new Turn();
+			
 			Position p1 = enemy.POS;
+			turn.start = p1;
 			
 			// ask enemy for move
 			Position p2 = enemy.makeMove(this);
@@ -479,6 +489,7 @@ public final class Map implements Pathfinding.Delegate {
 				
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
+				turn.attackPos = player.POS;
 				enemy.attack(player);
 				
 				// game over (?)
@@ -488,9 +499,13 @@ public final class Map implements Pathfinding.Delegate {
 					// TODO: do something after game over
 				}
 			}
+			
+			turn.end = enemy.POS;
+			turn.pathfind(this);
+			turns.add(turn);
 		}
 		
-		return new ArrayList<>();
+		return turns;
 	}
 	
 	/**
@@ -520,16 +535,14 @@ public final class Map implements Pathfinding.Delegate {
 			for (int y = 0; y < height; y++) {
 				String line = lines.get(y);
 				for (int x = 0; x < width; x++) {
-					switch (line.charAt(x)) {
-						case ' ': // empty space
-							entities[x][y] = null;
-							break;
-						case 'W': // wall
-							entities[x][y] = newWall(new Position(x, y));
-							break;
-						case 'C': // some character
-							entities[x][y] = newPlayer(new Position(x, y));
-							break;
+					if (line.charAt(x) == ' ') { // empty space
+						entities[x][y] = null;
+					}
+					else if (line.charAt(x) == 'W') { // wall
+						entities[x][y] = newWall(new Position(x, y));
+					}
+					else if (line.charAt(x) == 'C') { // some character
+						entities[x][y] = newPlayer(new Position(x, y));
 					}
 				}
 			}
@@ -577,9 +590,18 @@ public final class Map implements Pathfinding.Delegate {
 		return enemy;
 	}
 	
+	/**
+	 * @param p The Position to check.
+	 * @return True if the Position is on the Map, false otherwise.
+	 */
+	public boolean positionOnMap(Position p) {
+		return p.x >= 0 && p.x < getWidth()
+				&& p.y >= 0 && p.y < getHeight();
+	}
+	
 	@Override
 	public boolean validPosition(Position p) {
-		if (p.x < 0 || p.x >= getWidth() || p.y < 0 || p.y >= getHeight()) {
+		if (!positionOnMap(p)) {
 			return false;
 		}
 		
@@ -589,7 +611,7 @@ public final class Map implements Pathfinding.Delegate {
 	
 	@Override
 	public boolean transparentPosition(Position p) {
-		if (p.x < 0 || p.x >= getWidth() || p.y < 0 || p.y >= getHeight()) {
+		if (!positionOnMap(p)) {
 			return false;
 		}
 		

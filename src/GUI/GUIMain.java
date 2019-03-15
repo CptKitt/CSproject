@@ -13,8 +13,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 /**
- * JavaFX application representing the GUI
- * interface for the game.
+ * JavaFX application representing the GUI interface for the game.
  */
 public class GUIMain extends Application {
 	private Map map;
@@ -22,12 +21,16 @@ public class GUIMain extends Application {
 	private Scene scene;
 	private Group root;
 	private Canvas canvas;
+	private Group infoGroup;
 
+	private Position hoverPosition;
 	private Position selectedPosition;
 	private Set<Position> possibleMoves;
-
-	public static final int WIDTH = 704;
-	public static final int HEIGHT = 480;
+	
+	/** The width of the application. */
+	public static final int WIDTH = 30 * 32 + 300;
+	/** The height of the application. */
+	public static final int HEIGHT = 20 * 32;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -36,15 +39,18 @@ public class GUIMain extends Application {
 
 		// javafx setup
 		canvas = new Canvas(WIDTH, HEIGHT);
-		root = new Group(canvas);
+		infoGroup = new Group();
+		infoGroup.setTranslateX(30 * 32);
+		root = new Group(canvas, infoGroup);
 		scene = new Scene(root, WIDTH, HEIGHT);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
+		scene.addEventFilter(MouseEvent.MOUSE_MOVED, this::sceneHovered);
 		
 		// temporary reset button
-		scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.getCode() == KeyCode.SPACE) {
+		scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.SPACE) {
 				reset();
 			}
 		});
@@ -59,18 +65,14 @@ public class GUIMain extends Application {
 		primaryStage.show();
 	}
 
-	/**
-	 * Starting point to launch the application.
-	 */
+	/** Starting point to launch the application. */
 	public static void main(String[] args) {
 		launch(args);
 	}
 	
-	/**
-	 * Generates a new map and resets variables.
-	 */
+	/** Generates a new map and resets variables. */
 	private void reset() {
-		map = new Map(15, 22);
+		map = new Map(20, 30);
 		map.populateGrid();
 		selectedPosition = null;
 		possibleMoves = new HashSet<>();
@@ -81,33 +83,36 @@ public class GUIMain extends Application {
 
 	/**
 	 * Event handling function for clicks in the scene.
-	 * @param e The MouseEvent to process.
+	 * @param event The MouseEvent to process.
 	 */
-	private void sceneClicked(MouseEvent e) {
+	private void sceneClicked(MouseEvent event) {
 		// convert coordinates to account for drawing
-		int x = (int)(e.getSceneX() / 32);
-		int y = (int)(e.getSceneY() / 32);
-		Position p = new Position(y, x);
+		int x = (int) (event.getSceneX() / Display.size);
+		int y = (int) (event.getSceneY() / Display.size);
+		Position pos = new Position(y, x);
 		
 		// make sure position exists on map
-		if (p.x < 0 || p.x >= map.getWidth() || p.y < 0 || p.y >= map.getHeight()) {
+		if (!map.positionOnMap(pos)) {
 			return;
 		}
 
 		// first click
 		if (selectedPosition == null) {
-			Set<Position> moves = map.possibleMovesForCharacter(p);
+			Set<Position> moves = map.possibleMovesForCharacter(pos);
 
 			// select character if possible moves exist
 			if (!moves.isEmpty()) {
-				selectedPosition = p;
+				selectedPosition = pos;
 				possibleMoves = moves;
 			}
 		}
 		// second click: try performing action
 		else {
-			if (map.processAction(selectedPosition, p) != null) {
-				map.endTurn();
+			// TODO: implement end turn event checks
+			Turn playerTurn = map.processAction(selectedPosition, pos);
+			if (playerTurn != null) {
+				System.out.println(playerTurn);
+				System.out.println(map.endTurn());
 			}
 			selectedPosition = null;
 			possibleMoves.clear();
@@ -115,5 +120,42 @@ public class GUIMain extends Application {
 
 		// update display
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
+	}
+	
+	/**
+	 * Event handler for mouse movement on the screen.
+	 * @param event The MouseEvent to process.
+	 */
+	private void sceneHovered(MouseEvent event) {
+		// convert coordinates to map
+		int x = (int) (event.getSceneX() / Display.size);
+		int y = (int) (event.getSceneY() / Display.size);
+		Position pos = new Position(y, x);
+		
+		// check bounds
+		if (!map.positionOnMap(pos)) {
+			pos = null;
+		}
+		
+		// no significant movement
+		if ((pos == null && hoverPosition == null)
+				|| (pos != null && pos.equals(hoverPosition))) {
+			return;
+		}
+		hoverPosition = pos;
+		
+		Entity entity;
+		
+		// check if hovered position is visible
+		if (pos == null || map.getVisibility()[pos.x][pos.y] < 0.1) {
+			entity = null;
+		}
+		else {
+			entity = map.getGrid()[pos.x][pos.y];
+		}
+		
+		// TODO: send to Display
+		System.out.println("hover pos " + pos + ": " + entity);
+//		display.drawInfoOnScene(map, infoGroup, entity);
 	}
 }
