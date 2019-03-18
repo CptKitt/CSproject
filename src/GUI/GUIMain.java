@@ -51,6 +51,11 @@ public class GUIMain extends Application {
 		// temporary reset button
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
 			if (event.getCode() == KeyCode.SPACE) {
+				System.out.println("enemy turns: " + map.endTurn());
+				display.drawMapOnScene(
+						map, canvas.getGraphicsContext2D(), possibleMoves);
+			}
+			else if (event.getCode() == KeyCode.BACK_SPACE) {
 				reset();
 			}
 		});
@@ -89,33 +94,39 @@ public class GUIMain extends Application {
 		// convert coordinates to account for drawing
 		int x = (int) (event.getSceneX() / Display.size);
 		int y = (int) (event.getSceneY() / Display.size);
-		Position pos = new Position(y, x);
 		
-		// make sure position exists on map
-		if (!map.positionOnMap(pos)) {
-			return;
+		// click in sidebar
+		if (x > 30) {
+			System.out.println("enemy turns: " + map.endTurn());
 		}
-
-		// first click
-		if (selectedPosition == null) {
-			Set<Position> moves = map.possibleMovesForCharacter(pos);
-
-			// select character if possible moves exist
-			if (!moves.isEmpty()) {
-				selectedPosition = pos;
-				possibleMoves = moves;
-			}
-		}
-		// second click: try performing action
+		// map click
 		else {
-			// TODO: implement end turn event checks
-			Turn playerTurn = map.processAction(selectedPosition, pos);
-			if (playerTurn != null) {
-				System.out.println(playerTurn);
-				System.out.println(map.endTurn());
+			Position pos = new Position(y, x);
+			
+			// make sure position exists on map
+			if (!map.positionOnMap(pos)) {
+				return;
 			}
-			selectedPosition = null;
-			possibleMoves.clear();
+			
+			// first click
+			if (selectedPosition == null) {
+				Set<Position> moves = map.possibleMovesForCharacter(pos);
+				
+				// select character if possible moves exist
+				if (!moves.isEmpty()) {
+					selectedPosition = pos;
+					possibleMoves = moves;
+				}
+			}
+			// second click: try performing action
+			else {
+				// TODO: implement end turn event checks
+				Turn playerTurn = map.processAction(selectedPosition, pos);
+				System.out.println("player turn: " + playerTurn);
+				
+				selectedPosition = null;
+				possibleMoves.clear();
+			}
 		}
 
 		// update display
@@ -155,7 +166,9 @@ public class GUIMain extends Application {
 		}
 		
 		// TODO: send to Display
-		System.out.println("hover pos " + pos + ": " + entity);
+		if (entity != null) {
+			System.out.println("hover pos " + pos + ": " + entity);
+		}
 //		display.drawInfoOnScene(map, infoGroup, entity);
 	}
 }

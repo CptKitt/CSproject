@@ -1,7 +1,5 @@
 package Model;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,7 +13,7 @@ import java.util.stream.Collectors;
  * methods to display and interact with it.
  */
 public final class Map implements Pathfinding.Delegate {
-	private Random rand = new Random();
+	// Private variables
 	
 	/** The characters and walls held by the map. */
 	private Entity[][] entities;
@@ -28,9 +26,7 @@ public final class Map implements Pathfinding.Delegate {
 	 */
 	private double[][] visibility;
 	
-	/**
-	 * A list of the players on the map.
-	 */
+	/** A list of the players on the map. */
 	private List<Player> players;
 	
 	/**
@@ -44,11 +40,23 @@ public final class Map implements Pathfinding.Delegate {
     
     /** The type of the Map. */
 	private Type type;
+	
+	/** The current floor number. Affects map generation. */
+	private int floor;
+	
+	// TODO: remove temporary set in favor of Entity.stamina
+	private Set<Position> moved = new HashSet<>();
+	
+	// Static variables
+	
+	/**
+	 * A log of the twenty most recent events.
+	 * Stored in a Deque for better insertion/removal times,
+	 * but is returned as a chronological List in {@code getLog()}.
+	 */
+	private static Deque<String> log = new ArrayDeque<>();
     
-    /** @return The type of the Map. */
-    public Type getType() {
-        return type;
-    }
+    // Constructors
     
     /** Creates a 10x10 Map. */
 	public Map() {
@@ -61,17 +69,61 @@ public final class Map implements Pathfinding.Delegate {
 	 * @param y The height of the Map.
 	 */
 	public Map(int x, int y) {
+		// create lists
 		entities = new Entity[x][y];
 		visibility = new double[x][y];
 		players = new ArrayList<>();
 		enemies = new ArrayList<>();
 		
-		populateGrid();
+		// set var defaults
+		floor = 0;
+		type = Type.TOWER;
+		
+		// create players
+		players.add(Player.randomPlayer());
+		players.add(Player.randomPlayer());
+		players.add(Player.randomPlayer());
+	}
+	
+	// Static public API
+	
+	/** @return The List of recent messages. */
+	static public List<String> getLog() {
+		return new ArrayList<>(log);
 	}
 	
 	/**
-	 * @return A copy of the entities represented by this Map.
+	 * Adds a message to the log list.
+	 * Although this method is not privacy-secure,
+	 * the Map does not use the log for anything
+	 * other than sending messages to display.
+	 * @param message The message to add.
 	 */
+	static public void logMessage(String message) {
+		// limit to 20 messages
+		while (log.size() >= 20) {
+			log.removeLast();
+		}
+		
+		log.addFirst(message);
+		
+		// TODO: remove debug
+		System.out.println(message);
+	}
+	
+	/** @return The type of the Map. */
+	public Type getType() {
+		return type;
+	}
+	
+	// Public API
+	
+	/** Types of Maps. */
+	public enum Type {
+		CAVE, DUNGEON, TOWER
+	}
+	
+	/** @return A copy of the entities represented by this Map. */
 	public Entity[][] getGrid() {
 		Entity[][] copy = new Entity[getWidth()][getHeight()];
 		for (int x = 0; x < getWidth(); x++) {
@@ -84,9 +136,7 @@ public final class Map implements Pathfinding.Delegate {
 		return copy;
 	}
 	
-	/**
-	 * @return A copy of the visibility of this Map.
-	 */
+	/** @return A copy of the visibility of the Map. */
 	public double[][] getVisibility() {
 		double[][] copy = new double[getWidth()][getHeight()];
 		for (int x = 0; x < getWidth(); x++) {
@@ -97,9 +147,7 @@ public final class Map implements Pathfinding.Delegate {
 		return copy;
 	}
 	
-	/**
-	 * @return A copy of the Players on the Map.
-	 */
+	/** @return A copy of the Players on the Map. */
 	public List<Player> getPlayers() {
 		List<Player> copy = new ArrayList<>();
 		for (Player player : players) {
@@ -108,9 +156,7 @@ public final class Map implements Pathfinding.Delegate {
 		return copy;
 	}
 	
-	/**
-	 * @return A copy of the Enemies on the Map.
-	 */
+	/** @return A copy of the Enemies on the Map. */
 	public List<Enemy> getEnemies() {
 		List<Enemy> copy = new ArrayList<>();
 		for (Enemy enemy : enemies) {
@@ -118,6 +164,32 @@ public final class Map implements Pathfinding.Delegate {
 		}
 		return copy;
 	}
+	
+	/** @return The floor number. */
+	public int getFloor() {
+		return floor;
+	}
+	
+	/** @return The width, x-length of the map. */
+	public int getWidth() {
+		return entities.length;
+	}
+	
+	/** @return The height, y-length of the map. */
+	public int getHeight() {
+		return entities.length == 0 ? 0 : entities[0].length;
+	}
+	
+	/**
+	 * @param p The Position to check.
+	 * @return True if the Position is on the Map, false otherwise.
+	 */
+	public boolean positionOnMap(Position p) {
+		return p.x >= 0 && p.x < getWidth()
+				&& p.y >= 0 && p.y < getHeight();
+	}
+	
+	// Public functions
 	
 	/** Updates visibility for the whole Map. */
 	private void updateVisibility() {
@@ -142,120 +214,50 @@ public final class Map implements Pathfinding.Delegate {
 				}
 				
 				// parabolic opacity curve
-				double dist = pos.distanceTo(pos2);
-				double opacity = Math.min(1, -Math.pow(dist / 7, 2) + 1.1);
-				visibility[pos2.x][pos2.y] = Math.max(opacity, visibility[pos2.x][pos2.y]);
+				double opacity = -Math.pow(pos.distanceTo(pos2) / 7.0, 2) + 1.1;
+				if (opacity > visibility[pos2.x][pos2.y]) {
+					visibility[pos2.x][pos2.y] = Math.min(1, opacity);
+				}
 			}
 		}
 	}
-    
-    /** Creates a random map. */
-	public void populateGrid() {
-		enemies.clear();
+	
+	/** Increments the floor number and recreates the Map. */
+	public void nextFloor() {
+		floor += 1;
 		visibility = new double[getWidth()][getHeight()];
+		moved.clear();
 		
-		int num = rand.nextInt(3);
-		if (num == 0) {
-			entities = MapGenerator.generateCave(getWidth(), getHeight());
-		}
-		else if (num == 1) {
+		// different types based on floor
+		if (floor <= 10) {
+			type = Type.TOWER;
 			entities = MapGenerator.generateCircle(getWidth(), getHeight());
 		}
-		else if (num == 2) {
+		else if (floor <= 20) {
+			type = Type.CAVE;
+			entities = MapGenerator.generateCave(getWidth(), getHeight());
+		}
+		else if (floor <= 30) {
+			type = Type.DUNGEON;
 			entities = MapGenerator.generateDungeon(getWidth(), getHeight());
 		}
 		else {
-			entities = MapGenerator.generateRandom(getWidth(), getHeight());
+			entities = new Entity[getWidth()][getHeight()];
 		}
-  
-		placePlayer();
-		placeStairs();
-	    placeEnemies();
-        
-        updateVisibility();
-	}
-	
-	/** Convenience function to place the character on the Map. */
-    private void placePlayer() {
-    	// random starting point
-	    Position pos;
-	    do {
-		    pos = new Position(
-				    rand.nextInt(getWidth()),
-				    rand.nextInt(getHeight()));
-	    } while (entities[pos.x][pos.y] != null);
-	    
-	    // place new player
-    	if (players.isEmpty()) {
-		    entities[pos.x][pos.y] = newPlayer(pos);
 		
-		    Player player = newPlayer(pos);
-		    players.add(player);
-		    entities[pos.x][pos.y] = player;
-	    }
-    	// place existing players nearby
-    	else {
-    		// try to place as close as possible
-    		Deque<Position> tiles = new ArrayDeque<>();
-    		tiles.addLast(pos);
-    		
-    		for (Player player : players) {
-    			while (true) {
-    				// poll and add adjacent to queue
-    				Position newPos = tiles.pollFirst();
-    				for (Position adjPos : newPos.adjacentPositions()) {
-    					tiles.addLast(adjPos);
-				    }
-    				
-    				// empty space, place player
-    				if (entities[newPos.x][newPos.y] == null) {
-    					entities[newPos.x][newPos.y] = player;
-    					player.setPOS(newPos);
-    					break;
-				    }
-			    }
-		    }
-	    }
-    }
-	
-	/** Convenience function to place enemies on the Map. */
-	private void placeEnemies() {
-		int num = rand.nextInt(5) + 3;
+		// TODO: remove
+		entities = MapGenerator.randomMap(getWidth(), getHeight());
 		
-		for (int i = 0; i < num; i++) {
-			Position pos = new Position(
-					rand.nextInt(getWidth()),
-					rand.nextInt(getHeight()));
-			
-			if (entities[pos.x][pos.y] != null ||
-					players.stream().anyMatch(
-							player -> player.POS.distanceTo(pos) < 6)) {
-				i--;
-			}
-			else {
-				Enemy enemy = newEnemy(pos);
-				enemies.add(enemy);
-				entities[pos.x][pos.y] = enemy;
-			}
-		}
+		MapGenerator.placePlayers(entities, players);
+		stairs = MapGenerator.placeStairs(entities, players);
+		enemies = MapGenerator.placeEnemies(entities, players);
+		
+		updateVisibility();
 	}
-	
-	/** Convenience function to place stairs on the Map. */
-	private void placeStairs() {
-		// random starting point
-		while (true) {
-			Position pos = new Position(
-					rand.nextInt(getWidth()),
-					rand.nextInt(getHeight()));
-			
-			// not covered and far enough away from players
-			if (entities[pos.x][pos.y] == null && players.stream()
-					.allMatch(player -> player.POS.distanceTo(pos) > 8)) {
-				stairs = newStairs(pos);
-				entities[pos.x][pos.y] = stairs;
-				break;
-			}
-		}
+    
+    /** Deprecated. */
+	public void populateGrid() {
+		nextFloor();
 	}
     
     /** Function to be deprecated. */
@@ -283,6 +285,11 @@ public final class Map implements Pathfinding.Delegate {
 			return new HashSet<>();
 		}
 		
+		// TODO: replace with stamina checks
+		if (moved.contains(p)) { // already moved
+			return new HashSet<>();
+		}
+		
 		// get moves and range
 		Set<Position> moves = possibleMovesForEntity(p);
 		int range = entities[p.x][p.y].SPD;
@@ -291,8 +298,7 @@ public final class Map implements Pathfinding.Delegate {
 		moves.addAll(enemies.stream().map(enemy -> enemy.POS).filter(pos ->
 				// enemy in range of attack and open square next to the position
 				Pathfinding.shortestPath(this, p, pos).size() < range
-						&& moves.stream().anyMatch(
-								pos2 -> pos2.distanceTo(pos) == 1)
+						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
 		
 		// add stairs
@@ -322,29 +328,15 @@ public final class Map implements Pathfinding.Delegate {
 		int range = entities[p.x][p.y].SPD;
 		
 		// add player attacks
-		for (Player player : players) {
-			// enemy in range of attack and open square next to the position
-			if (Pathfinding.shortestPath(this, p, player.POS).size() <= range
-					&& moves.stream().anyMatch(p2 -> p2.distanceTo(player.POS) == 1)) {
-				moves.add(player.POS);
-			}
-		}
+		moves.addAll(players.stream().map(player -> player.POS).filter(pos ->
+				Pathfinding.shortestPath(this, p, pos).size() < range
+						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
+		).collect(Collectors.toList()));
 		
 		return moves;
 	}
 	
-	/**
-	 * @param p The Position of the Entity.
-	 * @return A Set of Positions that the Entity can move to.
-	 */
-	private Set<Position> possibleMovesForEntity(Position p) {
-		if (entities[p.x][p.y] == null) {
-			return new HashSet<>();
-		}
-		
-		return Pathfinding.movementForPosition(
-				this, p, entities[p.x][p.y].SPD);
-	}
+	// Interaction functions
 	
 	/**
 	 * Attempts to process an action.
@@ -370,14 +362,21 @@ public final class Map implements Pathfinding.Delegate {
 		if (!(entity1 instanceof Player)) {
 			return null;
 		}
+		// not a possible move, ignore
+		else if (!possibleMovesForCharacter(p1).contains(p2)) {
+			return null;
+		}
 		
 		Player player = (Player) entity1;
 		Turn turn = new Turn();
 		turn.start = p1;
 		
-		// not a possible move, ignore
-		if (!possibleMovesForCharacter(p1).contains(p2)) {
-			return null;
+		// destination is an empty space
+		if (entity2 == null) {
+			// move character
+			entities[p2.x][p2.y] = player;
+			entities[p1.x][p1.y] = null;
+			player.setPOS(p2);
 		}
 		// move to stairs
 		else if (entity2 instanceof Stairs) {
@@ -411,20 +410,17 @@ public final class Map implements Pathfinding.Delegate {
 			if (enemy.HP <= 0) {
 				enemies.remove(enemy);
 				entities[p2.x][p2.y] = null;
-				System.out.println("You defeated the enemy!");
+				logMessage("You defeated the enemy!");
 			}
 		}
-		// destination is an empty space
 		else {
-			// move character
-			entities[p2.x][p2.y] = player;
-			entities[p1.x][p1.y] = null;
-			player.setPOS(p2);
+			return null;
 		}
 		
 		// action successfully completed, finish
 		updateVisibility();
 		
+		moved.add(player.POS);
 		turn.end = player.POS;
 		turn.pathfind(this);
 		return turn;
@@ -435,7 +431,24 @@ public final class Map implements Pathfinding.Delegate {
 	 * @return A List of actions that were taken by enemies.
 	 */
 	public List<Turn> endTurn() {
+		moved.clear();
+		
 		return processEnemyMoves();
+	}
+	
+	// Private functions
+	
+	/**
+	 * @param p The Position of the Entity.
+	 * @return A Set of Positions that the Entity can move to.
+	 */
+	private Set<Position> possibleMovesForEntity(Position p) {
+		if (entities[p.x][p.y] == null) {
+			return new HashSet<>();
+		}
+		
+		return Pathfinding.movementForPosition(
+				this, p, entities[p.x][p.y].SPD);
 	}
 	
 	/**
@@ -494,10 +507,15 @@ public final class Map implements Pathfinding.Delegate {
 				
 				// game over (?)
 				if (player.HP <= 0) {
+					players.remove(player);
 					entities[p2.x][p2.y] = null;
-					System.out.println("You died.\nGame over!");
+					logMessage("A character has died.");
 					// TODO: do something after game over
 				}
+			}
+			else {
+				// some other object: ignore
+				continue;
 			}
 			
 			turn.end = enemy.POS;
@@ -508,96 +526,7 @@ public final class Map implements Pathfinding.Delegate {
 		return turns;
 	}
 	
-	/**
-	 * @param path The path of the file to read from.
-	 */
-	public void readMapFromFile(String path) {
-		try {
-		    // get all lines
-			Scanner in = new Scanner(new File(path));
-			List<String> lines = new ArrayList<>();
-			while (in.hasNextLine()) {
-				lines.add(in.nextLine());
-			}
-			in.close();
-			
-			if (lines.isEmpty()) {
-				return;
-			}
-			
-			// form grid
-			int width = lines.get(0).length();
-			int height = lines.size();
-			
-			entities = new Entity[width][height];
-			
-			// read information
-			for (int y = 0; y < height; y++) {
-				String line = lines.get(y);
-				for (int x = 0; x < width; x++) {
-					if (line.charAt(x) == ' ') { // empty space
-						entities[x][y] = null;
-					}
-					else if (line.charAt(x) == 'W') { // wall
-						entities[x][y] = newWall(new Position(x, y));
-					}
-					else if (line.charAt(x) == 'C') { // some character
-						entities[x][y] = newPlayer(new Position(x, y));
-					}
-				}
-			}
-		}
-		catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-    
-    /** @return The width, x-length of the map. */
-	public int getWidth() {
-	    return entities.length;
-    }
-    
-    /** @return The height, y-length of the map. */
-    public int getHeight() {
-	    return entities.length == 0 ? 0 : entities[0].length;
-    }
-	
-	/** Function to create stairs. */
-    private Stairs newStairs(Position position) {
-    	Stairs stairs = new Stairs();
-    	stairs.setPOS(position);
-    	return stairs;
-    }
-	
-	/** Function to create a wall. */
-	private Obstacle newWall(Position position) {
-		Obstacle obstacle = new Obstacle();
-		obstacle.setPOS(position);
-		return obstacle;
-	}
-	
-	/** Function to return a player. */
-	private Player newPlayer(Position position) {
-		Player player = Player.randomPlayer();
-		player.setPOS(position);
-		return player;
-	}
-	
-	/** Function to return an enemy. */
-	private Enemy newEnemy(Position position) {
-		Enemy enemy = Enemy.randomEnemy(players.get(0));
-		enemy.setPOS(position);
-		return enemy;
-	}
-	
-	/**
-	 * @param p The Position to check.
-	 * @return True if the Position is on the Map, false otherwise.
-	 */
-	public boolean positionOnMap(Position p) {
-		return p.x >= 0 && p.x < getWidth()
-				&& p.y >= 0 && p.y < getHeight();
-	}
+	// Interface implementation methods
 	
 	@Override
 	public boolean validPosition(Position p) {
@@ -605,8 +534,7 @@ public final class Map implements Pathfinding.Delegate {
 			return false;
 		}
 		
-		Entity entity = entities[p.x][p.y];
-		return entity == null || entity instanceof Player;
+		return entities[p.x][p.y] == null;
 	}
 	
 	@Override
@@ -617,9 +545,4 @@ public final class Map implements Pathfinding.Delegate {
 		
 		return !(entities[p.x][p.y] instanceof Obstacle);
 	}
-    
-    /** Types of Maps. */
-	enum Type {
-	    CAVE, DUNGEON, TOWER
-    }
 }
