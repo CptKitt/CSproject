@@ -12,18 +12,20 @@ import java.util.List;
 */
 public class TextMain {
 	private static Map map;
-	private static String floor;
 
 	public static void main(String[] args) {
-
 		map = new Map(10, 15);
-
+		List<Player> playable = map.getPlayers();
 		Display display = new Display();
-
 		UserInput input = new UserInput();
 
 		while (true) {
 			display.printMap(map);
-			playerTurn(map, input);
+			for (Player userChar: playable) {
+				Position move = input.moveInput();
+				map.processAction(userChar.getPos(), move)
+			}
+			//map.endTurn()
 		}
+
 }

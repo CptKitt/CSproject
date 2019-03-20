@@ -13,7 +13,7 @@ public class UserInput {
 	 *Interactive Text-Based version in the form: x,y.
 	 *@return a Position object containing coordinate information on where the user wants a character to move
 	 */
-	public Position movementInput() {
+	public Position moveInput() {
 		Scanner userInput = new Scanner(System.in);
 		System.out.println("Please enter a position to move a character as an ordered pair, with a comma inbetween (e.g. x,y):");
 
