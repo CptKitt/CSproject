@@ -6,27 +6,55 @@ import java.util.ArrayList;
 /**
 *Executes the Interactive Text-Based Version of Group 9's game.
 *Contain instance variable: map:Map.
-*Contains methods: validInput(input:String):boolean, main(args:String[]):void.
+*Contains methods: main(args:String[]):void.
 *
 */
 public class TextMain {
-	static private Map map;
-	static 
+	private static Map map;
+	private static String floor;
 
 	public static void main(String[] args) {
 
-		for 
-		map = new Map(10, 20);
-		map.populateGrid();
+		for (int fLevel = 0; fLevel < 4; fLevel++) {
+			fLevel = 3;
+			if (floorType(fLevel)) {
+				for (int i = 0; i < 10; i++) {
+					map = new Map(10, 20);
+					map.populateGrid();
 
-		Display display = new Display();
+					Display display = new Display();
 
-		UserInput input = new UserInput();
+					UserInput input = new UserInput();
 
-		while (true) {
-			display.printMap(map);
-			Position move = input.movementInput();
-			map.setStart(new Position(move));
+					while (true) {
+						display.printMap(map);
+						System.out.println("Floor Level: " + fLevel + i + " " + floor);
+						Position move = input.movementInput();
+						map.setStart(new Position(move));
+					}
+				}
+			} else {
+				System.out.println("Congratulations! You have traversed all floors, and Conquered the Map");
+				break;
+			}
+		}
+	}
+
+	/**
+	* Currently Looks for the type of Floor for each threshold
+	*/
+	public static boolean floorType(int level) {
+		if (level == 0) {
+			floor = "Dungeon";
+			return true;
+		} else if (level == 1) {
+			floor = "Cave";
+			return true;
+		} else if (level == 2) {
+			floor = "Tower";
+			return true;
+		} else {
+			return false;
 		}
 	}
 

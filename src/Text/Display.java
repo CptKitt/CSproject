@@ -41,7 +41,8 @@ public class Display {
                         System.out.print("    ");
                     } else if (entities instanceof Player) {
                         System.out.print("x   ");
-
+		//Implement a symbol for the available movement spaces, i.e '*'
+		//Implement a symbol for the stairs, i.e '>'
                     } else {
                         System.out.print("#   ");
 
