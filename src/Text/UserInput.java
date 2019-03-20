@@ -17,9 +17,15 @@ public class UserInput {
 		Scanner userInput = new Scanner(System.in);
 		System.out.println("Please enter a position to move a character as an ordered pair, with a comma inbetween (e.g. x,y):");
 
+
 		while (true) {
 			try {
 				String input = userInput.nextLine();
+
+				if (input.equals("")) {
+					System.exit(0);
+				}
+
 				String[] parts = input.split(",");
 				
 				int xCoord = Integer.parseInt(parts[0]);

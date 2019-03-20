@@ -16,7 +16,7 @@ public class TextMain {
 	}
 
 	public static void main(String[] args) {
-		map = new Map(20, 10);
+		map = new Map(10, 20);
 		map.populateGrid();
 
 		Display display = new Display();
