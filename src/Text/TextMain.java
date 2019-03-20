@@ -1,6 +1,7 @@
 package Text;
 
 import Model.*;
+import java.util.ArrayList;
 
 /**
 *Executes the Interactive Text-Based Version of Group 9's game.
@@ -10,12 +11,11 @@ import Model.*;
 */
 public class TextMain {
 	static private Map map;
-
-	public boolean validInput(String input) {
-		return false;
-	}
+	static 
 
 	public static void main(String[] args) {
+
+		for 
 		map = new Map(10, 20);
 		map.populateGrid();
 
@@ -28,5 +28,19 @@ public class TextMain {
 			Position move = input.movementInput();
 			map.setStart(new Position(move));
 		}
+	}
+
+	/**
+	*Used to disguish user/player turn order, and methods that user may use
+	*/
+	public static void playerTurn() {
+
+	}
+
+	/**
+	*Used to distinguis enemy turn and methods that enemyAI may use
+	*/
+	public static void computerTurn() {
+
 	}
 }
