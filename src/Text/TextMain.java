@@ -2,6 +2,7 @@ package Text;
 
 import Model.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
 *Executes the Interactive Text-Based Version of Group 9's game.
@@ -16,11 +17,9 @@ public class TextMain {
 	public static void main(String[] args) {
 
 		for (int fLevel = 0; fLevel < 4; fLevel++) {
-			fLevel = 3;
 			if (floorType(fLevel)) {
 				for (int i = 0; i < 10; i++) {
-					map = new Map(10, 20);
-					map.populateGrid();
+					map = new Map(10, 15);
 
 					Display display = new Display();
 
@@ -29,8 +28,8 @@ public class TextMain {
 					while (true) {
 						display.printMap(map);
 						System.out.println("Floor Level: " + fLevel + i + " " + floor);
-						Position move = input.movementInput();
-						map.setStart(new Position(move));
+						playerTurn(input);
+						
 					}
 				}
 			} else {
@@ -61,14 +60,16 @@ public class TextMain {
 	/**
 	*Used to disguish user/player turn order, and methods that user may use
 	*/
-	public static void playerTurn() {
-
+	public static void playerTurn(UserInput input) {
+		//List<Player> players = levelMap.getPlayers();
+		Position move = input.movementInput();
 	}
 
 	/**
 	*Used to distinguis enemy turn and methods that enemyAI may use
 	*/
-	public static void computerTurn() {
+	public static void computerTurn(Map levelMap) {
+		List<Enemy> enemies = levelMap.getEnemies();
 
 	}
 }
