@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import java.io.File;
 
+//TODO: Add sidebar
 public class Display {
 	public static final double size = 32d;
 
@@ -21,6 +22,7 @@ public class Display {
 		Image highlight = new Image("GUI/assets/move_highlight.png",size,size,true,false);
 		Image shade = new Image("GUI/assets/night_overlay.png",size,size,true,false);
 		Image upstairs = new Image("GUI/assets/stairs_up.png",size,size,true,false);
+		Image downstairs = new Image("GUI/assets/stairs_down.png",size,size,true,false);
 
 		//entities (players, enemies)
 		Image slime = new Image("GUI/assets/green_slime_idle.gif",size,size,true,false);
@@ -42,7 +44,7 @@ public class Display {
                     }
                 }
 				else if (e instanceof Stairs) {
-					g.drawImage(upstairs,j*size,i*size);
+					g.drawImage(downstairs,j*size,i*size);
 				}
 				else if (e instanceof Enemy) {
 					g.drawImage(slime,j*size,i*size);
