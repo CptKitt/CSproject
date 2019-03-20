@@ -15,6 +15,7 @@ public class TextMain {
 
 	public static void main(String[] args) {
 		map = new Map(10, 15);
+		map.nextFloor();
 		List<Player> playable = map.getPlayers();
 		Display display = new Display();
 		UserInput input = new UserInput();
@@ -23,9 +24,9 @@ public class TextMain {
 			display.printMap(map);
 			for (Player userChar: playable) {
 				Position move = input.moveInput();
-				map.processAction(userChar.getPos(), move)
+				map.processAction(userChar.POS, move);
 			}
 			//map.endTurn()
 		}
-
+	}
 }

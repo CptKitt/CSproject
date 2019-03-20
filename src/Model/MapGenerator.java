@@ -5,7 +5,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * A class containing static methods related to Map generation.
+ * A class containing a collection of
+ * static methods related to Map generation.
  */
 public final class MapGenerator {
     private MapGenerator() { }
@@ -399,13 +400,14 @@ public final class MapGenerator {
         fillWalls(map);
         
         // generate points
+        int minDist = (width + height) / 5;
         int nLines = rand.nextInt(3) + 4;
         List<Position> points = new ArrayList<>();
         for (int i = 0; i < nLines; i++) {
             Position pos = new Position(
                     rand.nextInt(width-2)+1,
                     rand.nextInt(height-2)+1);
-            if (points.stream().anyMatch(p -> p.distanceTo(pos) < 10)) {
+            if (points.stream().anyMatch(p -> p.distanceTo(pos) < minDist)) {
                 i--;
             }
             else {
@@ -502,6 +504,7 @@ public final class MapGenerator {
     /** Places stairs on the Map. */
     static Stairs placeStairs(Entity[][] map, List<Player> players) {
         Stairs stairs;
+        int minDist = (map.length + map[0].length) / 6;
         
         // random starting point
         while (true) {
@@ -511,7 +514,7 @@ public final class MapGenerator {
         
             // not covered and far enough away from players
             if (map[pos.x][pos.y] == null && players.stream()
-                    .allMatch(player -> player.POS.distanceTo(pos) > 8)) {
+                    .allMatch(player -> player.POS.distanceTo(pos) > minDist)) {
                 stairs = newStairs(pos);
                 map[pos.x][pos.y] = stairs;
                 break;
@@ -524,6 +527,7 @@ public final class MapGenerator {
     /** Places and returns enemies on the Map. */
     static List<Enemy> placeEnemies(Entity[][] map, List<Player> players) {
         List<Enemy> enemies = new ArrayList<>();
+        int minDist = (map.length + map[0].length) / 8;
         
         // random number of enemies
         int num = rand.nextInt(5) + 3;
@@ -535,7 +539,7 @@ public final class MapGenerator {
         
             if (map[pos.x][pos.y] != null ||
                     players.stream().anyMatch(
-                            player -> player.POS.distanceTo(pos) < 6)) {
+                            player -> player.POS.distanceTo(pos) < minDist)) {
                 i--;
             }
             else {
@@ -646,10 +650,12 @@ public final class MapGenerator {
         return enemy;
     }
     
+    /** Returns true if the Position is in the range provided. */
     private static boolean positionInRange(Position pos, int width, int height) {
         return positionInRange(pos.x, pos.y, width, height);
     }
     
+    /** Returns true if the coordinates are in the range provided. */
     private static boolean positionInRange(int x, int y, int width, int height) {
         return x >= 0 && x < width && y >= 0 && y < height;
     }

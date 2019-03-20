@@ -111,16 +111,16 @@ public final class Map implements Pathfinding.Delegate {
 		System.out.println(message);
 	}
 	
-	/** @return The type of the Map. */
-	public Type getType() {
-		return type;
-	}
-	
 	// Public API
 	
 	/** Types of Maps. */
 	public enum Type {
 		CAVE, DUNGEON, TOWER
+	}
+	
+	/** @return The type of the Map. */
+	public Type getType() {
+		return type;
 	}
 	
 	/** @return A copy of the entities represented by this Map. */
