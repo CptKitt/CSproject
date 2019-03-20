@@ -61,7 +61,7 @@ public class Player extends Entity {
 			this.LVLup(this.EXP);
 		}
 		
-		System.out.println("Dealt " + (int)damage + " damage!");
+		Map.logMessage("Dealt " + (int) damage + " damage!");
 	
 	}
 	
