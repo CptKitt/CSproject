@@ -2,6 +2,7 @@ package Text;
 
 import Model.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public class TextMain {
 		UserInput input = new UserInput();
 
 		while (true) {
-			display.printMap(map);
+			display.printMap(map, new HashSet<>());
 			for (Player userChar: playable) {
 				Position move = input.moveInput();
 				map.processAction(userChar.POS, move);

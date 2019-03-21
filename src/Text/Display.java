@@ -1,6 +1,9 @@
 package Text;
 
 import Model.*;
+import javafx.geometry.Pos;
+
+import java.util.Set;
 
 /**
  *
@@ -8,7 +11,7 @@ import Model.*;
 public class Display {
 
 
-    public void printMap(Map map) {
+    public void printMap(Map map, Set<Position> highlight) {
 
         Entity[][] grid = map.getGrid();
         Entity entities;
@@ -16,11 +19,11 @@ public class Display {
 
         System.out.print(" ");
         for (int i = 0; i < grid[0].length; i++) {
-		if (i >= 0 && i < 10) {
-            		System.out.print("  " + i + " ");
-		} else {
-			System.out.print(" " + i + " ");
-		}
+            if (i >= 0 && i < 10) {
+                System.out.print("  " + i + " ");
+            } else {
+                System.out.print(" " + i + " ");
+            }
         }
 
 
@@ -29,32 +32,60 @@ public class Display {
             if (i >= 0 && i < 10) {
                 System.out.print("0" + i + " ");
             } else {
-                System.out.print(i + " ");}
+                System.out.print(i + " ");
+            }
 
 
-                for (int j = 0; j < grid[i].length; j++) {
+            for (int j = 0; j < grid[i].length; j++) {
 
 
-                    entities = grid[i][j];
+                Position position = new Position(i, j);
+                entities = grid[i][j];
+
+                if (highlight.contains(position)) {
+
 
                     if (entities == null) {
                         System.out.print("    ");
                     } else if (entities instanceof Player) {
-                        System.out.print("x   ");
-		//Implement a symbol for the available movement spaces, i.e '*'
-		//Implement a symbol for the stairs, i.e '>'
+                        System.out.print("[x] ");
+
+                    } else if (entities instanceof Enemy) {
+                        System.out.print("[O] ");
+                    } else if (entities instanceof Stairs) {
+                        System.out.print("[<] ");
                     } else {
                         System.out.print("#   ");
 
                     }
 
 
+                } else {
+                    if (entities == null) {
+                        System.out.print("    ");
+                    } else if (entities instanceof Player) {
+                        System.out.print("x   ");
+
+                    } else if (entities instanceof Enemy) {
+                        System.out.print("O   ");
+                    } else if (entities instanceof Stairs) {
+                        System.out.print("<   ");
+                    } else {
+                        System.out.print("#   ");
+
+                    }
+
                 }
 
-            System.out.println();
-        }
+            }
+        }System.out.println();
+
+
     }
+
+
 }
+
 
 
 
