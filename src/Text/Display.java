@@ -46,7 +46,7 @@ public class Display {
 
 
                     if (entities == null) {
-                        System.out.print("    ");
+                        System.out.print("[ ] ");
                     } else if (entities instanceof Player) {
                         System.out.print("[x] ");
 
