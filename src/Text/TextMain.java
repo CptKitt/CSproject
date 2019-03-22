@@ -1,7 +1,6 @@
 package Text;
 
 import Model.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,18 +13,20 @@ public class TextMain {
 	private static Map map;
 
 	public static void main(String[] args) {
-		map = new Map(10, 15);
-		List<Player> playable = map.getPlayers();
+		
+		map = new Map(10,15);
 		Display display = new Display();
+		List<Player> playable = map.getPlayers();
 		UserInput input = new UserInput();
 
 		while (true) {
-			display.printMap(map);
 			for (Player userChar: playable) {
+				Entity player = userChar.copy();
+				display.printMap(map);
 				Position move = input.moveInput();
-				map.processAction(userChar.getPos(), move)
+				map.processAction(player.POS, move);
 			}
-			//map.endTurn()
+			map.endTurn();
 		}
-
+	}
 }

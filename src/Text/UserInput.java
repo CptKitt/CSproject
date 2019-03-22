@@ -44,7 +44,7 @@ public class UserInput {
 	*/
 	public static void main(String[] args) {
 		UserInput input = new UserInput();
-		Position test = new Position(input.movementInput());
+		Position test = new Position(input.moveInput());
 		System.out.println(test);
 	}
 }
