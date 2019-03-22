@@ -31,7 +31,17 @@ public class Display {
 		Image downstairs = new Image("GUI/assets/environment/stairs_down.png",size,size,true,false);
 
 		//entities (players, enemies)
-		Image slime = new Image("GUI/assets/slimes/green_slime.png",size,size,true,false);
+		Image red_slime = new Image("GUI/assets/slimes/red_slime.png",size,size,true,false);
+		Image orange_slime = new Image("GUI/assets/slimes/orange_slime.png",size,size,true,false);
+		Image yellow_slime = new Image("GUI/assets/slimes/yellow_slime.png",size,size,true,false);
+		Image green_slime = new Image("GUI/assets/slimes/green_slime.png",size,size,true,false);
+		Image cyan_slime = new Image("GUI/assets/slimes/cyan_slime.png",size,size,true,false);
+		Image blue_slime = new Image("GUI/assets/slimes/blue_slime.png",size,size,true,false);
+		Image purple_slime = new Image("GUI/assets/slimes/purple_slime.png",size,size,true,false);
+		Image rainbow_slime = new Image("GUI/assets/slimes/rainbow_slime.png",size,size,true,false);
+		Image white_slime = new Image("GUI/assets/slimes/white_slime.png",size,size,true,false);
+		Image black_slime = new Image("GUI/assets/slimes/black_slime.png",size,size,true,false);
+
 		Image hero = new Image("GUI/assets/player1.png",size,size,true,false);
 
 		for(int i=grid.length-1;i>=0;i--) {
@@ -52,7 +62,8 @@ public class Display {
 					g.drawImage(downstairs,j*size,i*size);
 				}
 				else if (e instanceof Enemy) { //draw enemies
-					g.drawImage(slime,j*size,i*size);
+					//TODO: add other slime colours
+					g.drawImage(green_slime,j*size,i*size);
 				}
         else if (grid[i][j] instanceof Player) {//draw players
             g.drawImage(hero,j*size,i*size);
