@@ -1,6 +1,7 @@
 package Text;
 
 import Model.*;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public class TextMain {
 		while (true) {
 			for (Player userChar: playable) {
 				Entity player = userChar.copy();
-				display.printMap(map);
+				display.printMap(map, new HashSet<>());
 				Position move = input.moveInput();
 				map.processAction(player.POS, move);
 			}
