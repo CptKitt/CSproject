@@ -26,7 +26,7 @@ public class GUIMain extends Application {
 	private Position hoverPosition;
 	private Position selectedPosition;
 	private Set<Position> possibleMoves;
-	
+
 	/** The width of the application. */
 	public static final int WIDTH = 30 * 32 + 300;
 	/** The height of the application. */
@@ -47,7 +47,7 @@ public class GUIMain extends Application {
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 		scene.addEventFilter(MouseEvent.MOUSE_MOVED, this::sceneHovered);
-		
+
 		// temporary reset button
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
 			if (event.getCode() == KeyCode.SPACE) {
@@ -59,7 +59,7 @@ public class GUIMain extends Application {
 				reset();
 			}
 		});
-		
+
 		// create map and vars
 		reset();
 
@@ -74,14 +74,14 @@ public class GUIMain extends Application {
 	public static void main(String[] args) {
 		launch(args);
 	}
-	
+
 	/** Generates a new map and resets variables. */
 	private void reset() {
 		map = new Map(20, 30);
 		map.populateGrid();
 		selectedPosition = null;
 		possibleMoves = new HashSet<>();
-		
+
 		// display once
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
@@ -94,7 +94,7 @@ public class GUIMain extends Application {
 		// convert coordinates to account for drawing
 		int x = (int) (event.getSceneX() / Display.size);
 		int y = (int) (event.getSceneY() / Display.size);
-		
+
 		// click in sidebar
 		if (x > 30) {
 			System.out.println("enemy turns: " + map.endTurn());
@@ -102,16 +102,16 @@ public class GUIMain extends Application {
 		// map click
 		else {
 			Position pos = new Position(y, x);
-			
+
 			// make sure position exists on map
 			if (!map.positionOnMap(pos)) {
 				return;
 			}
-			
+
 			// first click
 			if (selectedPosition == null) {
 				Set<Position> moves = map.possibleMovesForCharacter(pos);
-				
+
 				// select character if possible moves exist
 				if (!moves.isEmpty()) {
 					selectedPosition = pos;
@@ -123,7 +123,7 @@ public class GUIMain extends Application {
 				// TODO: implement end turn event checks
 				Turn playerTurn = map.processAction(selectedPosition, pos);
 				System.out.println("player turn: " + playerTurn);
-				
+
 				selectedPosition = null;
 				possibleMoves.clear();
 			}
@@ -132,7 +132,7 @@ public class GUIMain extends Application {
 		// update display
 		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
 	}
-	
+
 	/**
 	 * Event handler for mouse movement on the screen.
 	 * @param event The MouseEvent to process.
@@ -142,21 +142,21 @@ public class GUIMain extends Application {
 		int x = (int) (event.getSceneX() / Display.size);
 		int y = (int) (event.getSceneY() / Display.size);
 		Position pos = new Position(y, x);
-		
+
 		// check bounds
 		if (!map.positionOnMap(pos)) {
 			pos = null;
 		}
-		
+
 		// no significant movement
 		if ((pos == null && hoverPosition == null)
 				|| (pos != null && pos.equals(hoverPosition))) {
 			return;
 		}
 		hoverPosition = pos;
-		
+
 		Entity entity;
-		
+
 		// check if hovered position is visible
 		if (pos == null || map.getVisibility()[pos.x][pos.y] < 0.1) {
 			entity = null;
@@ -164,11 +164,11 @@ public class GUIMain extends Application {
 		else {
 			entity = map.getGrid()[pos.x][pos.y];
 		}
-		
+
 		// TODO: send to Display
 		if (entity != null) {
 			System.out.println("hover pos " + pos + ": " + entity);
 		}
-//		display.drawInfoOnScene(map, infoGroup, entity);
+		display.drawInfoOnScene(map, infoGroup, entity);
 	}
 }
