@@ -1,7 +1,6 @@
 package Text;
 
 import Model.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -12,22 +11,22 @@ import java.util.List;
 *
 */
 public class TextMain {
-	private static Map map;
+	private static Map map = new Map(10,15);
+	private static Display display = new Display();
+	private static UserInput input = new UserInput();
+	private static List<Player> playable = map.getPlayers();
 
 	public static void main(String[] args) {
-		map = new Map(10, 15);
-		map.nextFloor();
-		List<Player> playable = map.getPlayers();
-		Display display = new Display();
-		UserInput input = new UserInput();
 
+		map.nextFloor();
 		while (true) {
-			display.printMap(map, new HashSet<>());
 			for (Player userChar: playable) {
+				Entity player = userChar.copy();
+				display.printMap(map, new HashSet<>());
 				Position move = input.moveInput();
-				map.processAction(userChar.POS, move);
+				map.processAction(player.POS, move);
 			}
-			//map.endTurn()
+			map.endTurn();
 		}
 	}
 }
