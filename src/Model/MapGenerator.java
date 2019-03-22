@@ -5,12 +5,23 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * A class containing static methods related to Map generation.
+ * A class containing a collection of
+ * static methods related to Map generation.
  */
 public final class MapGenerator {
     private MapGenerator() { }
     
     private static Random rand = new Random();
+    
+    // helper methods to avoid infinite loops
+    private static int count = 0;
+    private static void resetCount() {
+        count = 0;
+    }
+    private static int count() {
+        count++;
+        return count;
+    }
     
     /** Generates one of the possible map types. */
     static Entity[][] randomMap(int width, int height) {
@@ -254,10 +265,10 @@ public final class MapGenerator {
         fillWalls(map);
         
         List<Room> rooms = new ArrayList<>();
-        int failed = 0;
+        resetCount();
         
         // fill with as many rooms as possible
-        while (failed < 100) {
+        while (count() < 1000) {
             // generate dimensions
             Position pos = new Position(
                     rand.nextInt(width - 6) + 1,
@@ -272,7 +283,6 @@ public final class MapGenerator {
             
             // check for intersect with other rooms
             if (rooms.stream().anyMatch(r -> r.touches(room))) {
-                failed++;
                 continue;
             }
             
@@ -335,12 +345,13 @@ public final class MapGenerator {
                 rand.nextInt(height-2)+1);
         do {
             // random end position
+            resetCount();
             Position end;
             do {
                 end = new Position(
                         rand.nextInt(width-2)+1,
                         rand.nextInt(height-2)+1);
-            } while (start.distanceTo(end) <= 8);
+            } while (start.distanceTo(end) <= 8 && count() < 1000);
             
             // find random line to end position
             // (Pathfinding A* is too linear)
@@ -399,13 +410,19 @@ public final class MapGenerator {
         fillWalls(map);
         
         // generate points
+        int minDist = (width + height) / 5;
         int nLines = rand.nextInt(3) + 4;
         List<Position> points = new ArrayList<>();
+        resetCount();
         for (int i = 0; i < nLines; i++) {
             Position pos = new Position(
                     rand.nextInt(width-2)+1,
                     rand.nextInt(height-2)+1);
-            if (points.stream().anyMatch(p -> p.distanceTo(pos) < 10)) {
+            
+            if (count() > 1000) {
+                points.add(pos);
+            }
+            else if (points.stream().anyMatch(p -> p.distanceTo(pos) < minDist)) {
                 i--;
             }
             else {
@@ -418,8 +435,7 @@ public final class MapGenerator {
             Position start = points.get(i-1);
             Position end = points.get(i);
             
-            // find random line to end position
-            // (Pathfinding A* is too linear)
+            // find line to end position
             List<Position> line = new ArrayList<>();
             Position move = start;
             while (!move.equals(end)) {
@@ -502,16 +518,24 @@ public final class MapGenerator {
     /** Places stairs on the Map. */
     static Stairs placeStairs(Entity[][] map, List<Player> players) {
         Stairs stairs;
+        int minDist = (map.length + map[0].length) / 6;
+        resetCount();
         
         // random starting point
         while (true) {
             Position pos = new Position(
                     rand.nextInt(map.length),
                     rand.nextInt(map[0].length));
-        
+            
+            // too many tries, allow any position
+            if (count() > 1000 && map[pos.x][pos.y] == null) {
+                stairs = newStairs(pos);
+                map[pos.x][pos.y] = stairs;
+                break;
+            }
             // not covered and far enough away from players
             if (map[pos.x][pos.y] == null && players.stream()
-                    .allMatch(player -> player.POS.distanceTo(pos) > 8)) {
+                    .allMatch(player -> player.POS.distanceTo(pos) > minDist)) {
                 stairs = newStairs(pos);
                 map[pos.x][pos.y] = stairs;
                 break;
@@ -524,6 +548,8 @@ public final class MapGenerator {
     /** Places and returns enemies on the Map. */
     static List<Enemy> placeEnemies(Entity[][] map, List<Player> players) {
         List<Enemy> enemies = new ArrayList<>();
+        int minDist = (map.length + map[0].length) / 8;
+        resetCount();
         
         // random number of enemies
         int num = rand.nextInt(5) + 3;
@@ -532,10 +558,14 @@ public final class MapGenerator {
             Position pos = new Position(
                     rand.nextInt(map.length),
                     rand.nextInt(map[0].length));
-        
+            
+            if (count() > 1000) {
+                break;
+            }
+            
             if (map[pos.x][pos.y] != null ||
                     players.stream().anyMatch(
-                            player -> player.POS.distanceTo(pos) < 6)) {
+                            player -> player.POS.distanceTo(pos) < minDist)) {
                 i--;
             }
             else {
@@ -646,10 +676,12 @@ public final class MapGenerator {
         return enemy;
     }
     
+    /** Returns true if the Position is in the range provided. */
     private static boolean positionInRange(Position pos, int width, int height) {
         return positionInRange(pos.x, pos.y, width, height);
     }
     
+    /** Returns true if the coordinates are in the range provided. */
     private static boolean positionInRange(int x, int y, int width, int height) {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
