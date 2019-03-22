@@ -10,15 +10,12 @@ import java.util.List;
 *
 */
 public class TextMain {
-	private static Map map;
+	private static Map map = new Map(10,15);
+	private static Display display = new Display();
+	private static UserInput input = new UserInput();
+	private static List<Player> playable = map.getPlayers();
 
 	public static void main(String[] args) {
-		
-		map = new Map(10,15);
-		Display display = new Display();
-		List<Player> playable = map.getPlayers();
-		UserInput input = new UserInput();
-
 		while (true) {
 			for (Player userChar: playable) {
 				Entity player = userChar.copy();
