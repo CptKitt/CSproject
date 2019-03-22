@@ -16,6 +16,7 @@ public class TextMain {
 	private static List<Player> playable = map.getPlayers();
 
 	public static void main(String[] args) {
+		map.nextFloor();
 		while (true) {
 			for (Player userChar: playable) {
 				Entity player = userChar.copy();
