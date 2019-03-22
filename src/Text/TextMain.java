@@ -11,7 +11,7 @@ import java.util.List;
 *
 */
 public class TextMain {
-	private static Map map map = new Map(10, 15);
+	private static Map map = new Map(10, 15);
 	private static Display display = new Display();
 	private static UserInput input = new UserInput();
 	private static List<Player> playable = map.getPlayers();
@@ -22,11 +22,28 @@ public class TextMain {
 
 		while (true) {
 			for (Player userChar: playable) {
+				//Setting a player's position from map
+				Entity[][] grid = map.getGrid();
+				for (int i = 0; i < grid.length; i++) {
+					for (int j = 0; j < grid[i].length; j++) {
+						Entity entity = grid[i][j];
+						if (entity instanceof Player) {
+							if (entity.maxHP == userChar.maxHP && entity.HP == userChar.HP) {
+								userChar.POS = new Position(i,j);
+								break;
+							}
+						}
+						if (userChar.POS != null) {
+							break;
+						}
+					}
+				}
+
+				display.printMap(map, map.possibleMovesForCharacter(userChar.POS));
 				Position move = input.moveInput();
-				display.printMap(map, new HashSet<>());
 				map.processAction(userChar.POS, move);
 			}
-			map.endTurn()
+			map.endTurn();
 		}
 	}
 }
