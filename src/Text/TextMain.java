@@ -11,17 +11,17 @@ import java.util.List;
 *
 */
 public class TextMain {
-	private static Map map = new Map(10, 15);
+	private static Map map = new Map(10,15);
 	private static Display display = new Display();
 	private static UserInput input = new UserInput();
 	private static List<Player> playable = map.getPlayers();
 
 	public static void main(String[] args) {
-		
-		map.nextFloor();
 
+		map.nextFloor();
 		while (true) {
 			for (Player userChar: playable) {
+
 				//Setting a player's position from map
 				Entity[][] grid = map.getGrid();
 				for (int i = 0; i < grid.length; i++) {
@@ -58,7 +58,6 @@ public class TextMain {
 			map.endTurn();
 			System.out.println("Your turn has ended!");
 			System.out.println("");
-
 		}
 	}
 }
