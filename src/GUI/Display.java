@@ -120,6 +120,10 @@ public class Display {
 			picture = new Image("GUI/assets/environment/wall2.png",size*2,size*2,true,false);
 			name = new Label("Wall");
 		}
+		else if (ent instanceof Stairs) {
+			picture = new Image("GUI/assets/environment/stairs_up.png",size*2,size*2,true,false);
+			name = new Label("Portal");
+		}
 		else if (ent instanceof Enemy) {
 			picture =  new Image("GUI/assets/slimes/green_slime.png",size*2,size*2,true,false);
 			name = new Label("Green Slime");
