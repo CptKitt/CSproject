@@ -15,7 +15,8 @@ public class UserInput {
 	 */
 	public Position moveInput() {
 		Scanner userInput = new Scanner(System.in);
-		System.out.println("Please enter a position to move a character as an ordered pair, with a comma inbetween (e.g. x,y):");
+		System.out.println("");
+		System.out.println("Please enter a position as <x,y> to highlighted \"x\", or <> to pass, or <exit> to close game:");
 
 
 		while (true) {
@@ -23,6 +24,9 @@ public class UserInput {
 				String input = userInput.nextLine();
 
 				if (input.equals("")) {
+					return null;
+				}
+				if (input.equals("exit")) {
 					System.exit(0);
 				}
 

@@ -36,12 +36,29 @@ public class TextMain {
 						}
 					}
 				}
-
+				//Displaying the map indicating one character and prompting for input
 				display.printMap(map, map.possibleMovesForCharacter(userChar.POS));
+				System.out.println("Floor: " + map.getFloor() + " " + map.getType());
 				Position move = input.moveInput();
 				map.processAction(userChar.POS, move);
+				if (move != null) {
+					map.logMessage("Character moved to: " + move);
+					
+				} else {
+					map.logMessage("Character has passed their move");
+				}
+				
+			}
+			playable = map.getPlayers();
+			if (playable.isEmpty()) {
+				System.out.println("");
+				System.out.println("All playable characters have died. GAME OVER!");
+				System.exit(0);
 			}
 			map.endTurn();
+			System.out.println("Your turn has ended!");
+			System.out.println("");
+
 		}
 	}
 }
