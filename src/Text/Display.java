@@ -19,7 +19,7 @@ public class Display {
 
         System.out.print(" ");
         for (int i = 0; i < grid[0].length; i++) {
-            if (i >= 0 && i < 10) {
+            if (i >= 0 && i < 11) {
                 System.out.print("  " + i + " ");
             } else {
                 System.out.print(" " + i + " ");

@@ -30,11 +30,9 @@ public class TextMain {
 						if (entity instanceof Player) {
 							if (entity.maxHP == userChar.maxHP && entity.HP == userChar.HP) {
 								userChar.POS = new Position(i,j);
+								i = grid.length;
 								break;
 							}
-						}
-						if (userChar.POS != null) {
-							break;
 						}
 					}
 				}
