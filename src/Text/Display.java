@@ -16,10 +16,10 @@ public class Display {
         Entity[][] grid = map.getGrid();
         Entity entities;
 
-
+	System.out.println("");
         System.out.print(" ");
         for (int i = 0; i < grid[0].length; i++) {
-            if (i >= 0 && i < 10) {
+            if (i >= 0 && i < 11) {
                 System.out.print("  " + i + " ");
             } else {
                 System.out.print(" " + i + " ");
@@ -78,16 +78,10 @@ public class Display {
                 }
 
             }
-        }System.out.println();
-
-
+        }
+		//Starts a new row to the Display
+		System.out.println();
     }
-
-
+	//Prints Floor number and type
+	//System.out.println("Floor: " + map.getFloor() + " " + map.getType());
 }
-
-
-
-
-
-
