@@ -254,25 +254,6 @@ public final class Map implements Pathfinding.Delegate {
 		
 		updateVisibility();
 	}
-    
-    /** Deprecated. */
-	public void populateGrid() {
-		nextFloor();
-	}
-    
-    /** Function to be deprecated. */
-    public void setStart(Position p) {
-    	Position playerPos = Position.NONE;
-    	for (int x = 0; x < getWidth(); x++) {
-    		for (int y = 0; y < getHeight(); y++) {
-    			if (entities[x][y] instanceof Player) {
-    				playerPos = new Position(x, y);
-			    }
-		    }
-	    }
-    	
-    	processAction(playerPos, p);
-    }
 	
 	/**
 	 * Calculates the possible moves for an Player at a Position.
@@ -381,7 +362,7 @@ public final class Map implements Pathfinding.Delegate {
 		// move to stairs
 		else if (entity2 instanceof Stairs) {
 			// refresh map
-			populateGrid();
+			nextFloor();
 			turn.end = p2;
 		}
 		// destination is an enemy

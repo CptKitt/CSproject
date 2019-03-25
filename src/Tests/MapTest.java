@@ -38,4 +38,68 @@ public class MapTest {
             }
         }
     }
+    
+    @Test
+    public void test_getVisibility_privacy() {
+        Map map = new Map();
+        map.nextFloor();
+        double oldValue = map.getVisibility()[0][0];
+        map.getVisibility()[0][0] += 1;
+        double newValue = map.getVisibility()[0][0];
+        assertEquals("Visibility returned by getVisibility should be a copy", oldValue, newValue, 0.0001);
+    }
+    
+    @Test
+    public void test_getPlayers_privacy() {
+        Map map = new Map();
+        map.nextFloor();
+        List<Player> players1 = map.getPlayers();
+        List<Player> players2 = map.getPlayers();
+        assertNotEquals("Players returned by getPlayers should not be equal", players1, players2);
+    }
+    
+    @Test
+    public void test_positionOnMap_highXY_false() {
+        Map map = new Map();
+        Position pos = new Position(map.getWidth(), map.getHeight());
+        boolean onMap = map.positionOnMap(pos);
+        boolean expected = false;
+        assertEquals("Test position on map " + pos, expected, onMap);
+    }
+    
+    @Test
+    public void test_positionOnMap_highXY_true() {
+        Map map = new Map();
+        Position pos = new Position(map.getWidth() - 1, map.getHeight() - 1);
+        boolean onMap = map.positionOnMap(pos);
+        boolean expected = true;
+        assertEquals("Test position on map " + pos, expected, onMap);
+    }
+    
+    @Test
+    public void test_positionOnMap_smallXY_false() {
+        Map map = new Map();
+        Position pos = new Position(-1, -1);
+        boolean onMap = map.positionOnMap(pos);
+        boolean expected = false;
+        assertEquals("Test position on map " + pos, expected, onMap);
+    }
+    
+    @Test
+    public void test_positionOnMap_smallXY_true() {
+        Map map = new Map();
+        Position pos = new Position(0, 0);
+        boolean onMap = map.positionOnMap(pos);
+        boolean expected = true;
+        assertEquals("Test position on map " + pos, expected, onMap);
+    }
+    
+    @Test
+    public void test_nextFloorIncrement() {
+        Map map = new Map();
+        map.nextFloor();
+        int expected = map.getFloor() + 1;
+        map.nextFloor();
+        assertEquals("nextFloor should increment floor ", expected, map.getFloor());
+    }
 }

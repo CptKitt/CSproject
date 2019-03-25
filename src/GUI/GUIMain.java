@@ -28,9 +28,9 @@ public class GUIMain extends Application {
 	private Set<Position> possibleMoves;
 
 	/** The width of the application. */
-	public static final int WIDTH = 30 * 32 + 300;
+	public static final double WIDTH = 30 * Display.size + 300;
 	/** The height of the application. */
-	public static final int HEIGHT = 20 * 32;
+	public static final double HEIGHT = 20 * Display.size;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -78,7 +78,7 @@ public class GUIMain extends Application {
 	/** Generates a new map and resets variables. */
 	private void reset() {
 		map = new Map(20, 30);
-		map.populateGrid();
+		map.nextFloor();
 		selectedPosition = null;
 		possibleMoves = new HashSet<>();
 
