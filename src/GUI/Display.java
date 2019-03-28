@@ -103,11 +103,11 @@ public class Display {
 		}
 
 		if (ent != null){
-			hp = new Label("HP: " + ent.HP);
-			lvl = new Label("LVL: " + ent.LVL);
-			atk = new Label("ATK: " + ent.ATK);
-			def = new Label("DEF: " + ent.DEF);
-			spd = new Label("SPD: " + ent.SPD);
+			hp = new Label("HP: " + ent.getHP());
+			lvl = new Label("LVL: " + ent.getLVL());
+			atk = new Label("ATK: " + ent.getATK());
+			def = new Label("DEF: " + ent.getDEF());
+			spd = new Label("SPD: " + ent.getSPD());
 		}
 		else {
 			hp = new Label();

@@ -10,37 +10,36 @@ public class Enemy extends Entity {
 	public Enemy(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP) {
 		super(HP, EVS, ATK, DEF, SPD, POS, LVL);
 	}
-	/** Takes a players level and generates a random enemy based on it **/
-	public static Enemy randomEnemy(Player p) {
-		int multiplier = p.getLVL();
+	/** Takes the floor level of the dungeon and generates a random enemy based on it **/
+	public static Enemy randomEnemy(int Floor) {
+		int multiplier = Floor;
 		Random rand = new Random();
 		double HP = (rand.nextInt(9) + 3) * multiplier;
-		double EVS = (rand.nextInt(9) + 1) * multiplier;
 		double ATK = (rand.nextInt(9) + 1) * multiplier;
 		int SPD = rand.nextInt(3) + 1;
 		double DEF = (rand.nextInt(9) + 1) * multiplier;
-		Enemy enemy = new Enemy(HP, EVS, ATK, DEF, SPD, null, 1, 0);
+		Enemy enemy = new Enemy(HP, ATK, DEF, SPD, null, 1, 0, "Placeholder");
 		return enemy;
 	}
 	
 	/** Takes a map, and returns a position for the enemy to move to. **/
 	public Position makeMove(Map map) {
-		Set<Position> moves = map.possibleMovesForEnemy(POS);
+		Set<Position> moves = map.possibleMovesForEnemy(getPOS());
 		if (moves.isEmpty()) {
-			return POS;
+			return getPOS();
 		}
 		
 		// check through players in map
 		for (Player player : map.getPlayers()) {
 			// player in range and in line of sight
-			if (Pathfinding.shortestPath(map, POS, player.POS).size() < 6
-					&& Pathfinding.lineOfSight(map, POS, player.POS)) {
+			if (Pathfinding.shortestPath(map, getPOS(), player.getPOS()).size() < 6
+					&& Pathfinding.lineOfSight(map, getPOS(), player.getPOS())) {
 				// attack if in range
-				if (moves.contains(player.POS)) {
-					return player.POS;
+				if (moves.contains(player.getPOS())) {
+					return player.getPOS();
 				}
 				// path towards player
-				List<Position> path = Pathfinding.shortestPath(map, POS, player.POS);
+				List<Position> path = Pathfinding.shortestPath(map, getPOS(), player.getPOS());
 				Collections.reverse(path);
 				for (Position pos : path) {
 					if (moves.contains(pos)) {
@@ -55,18 +54,18 @@ public class Enemy extends Entity {
 	}
 	
 	/** Attacks a player, and subtracts HP from them based on the Enemy's attack and the Player's defense. **/
-	public void attack(Player p) {
-		double ATK = this.ATK;
-		double damage = (ATK * 10)/(p.DEF + 5);
-		p.setHP(p.HP - damage);
+	public void attack(Player Player) {
+		double ATK = this.getATK();
+		double damage = (ATK * 10)/(Player.getDEF() + 5);
+		Player.setHP(Player.getHP() - damage);
 		
 		Map.logMessage("Took " + (int) damage + " damage!");
    }
 	
 	@Override
 	public Entity copy() {
-		Enemy e = new Enemy(maxHP, EVS, ATK, DEF, SPD, POS, LVL, 0);
-		e.HP = HP;
-		return e;
+		Enemy Enemy = new Enemy(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), 0, "Placeholder");
+		Enemy.setHP(getHP());
+		return Enemy;
 	}
 }

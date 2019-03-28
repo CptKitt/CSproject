@@ -1,19 +1,18 @@
 package Model;
 
 public abstract class Entity {	
-	public double maxHP;
-	public double HP;
-	public double ATK;
-	public double DEF;
-	public int SPD;
-	public double EVS;
-	public int LVL;
-	public Position POS;
+	private double maxHP;
+	private double HP;
+	private double ATK;
+	private double DEF;
+	private int SPD;
+	private int LVL;
+	private Position POS;
 	
-	public Entity(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL) {
+	
+	public Entity(double HP, double ATK, double DEF, int SPD, Position POS, int LVL) {
 		this.maxHP = HP;
 		this.HP = HP;
-		this.EVS = EVS;
 		this.ATK = ATK;
 		this.DEF = DEF;
 		this.SPD = SPD;
@@ -22,9 +21,6 @@ public abstract class Entity {
 	}
 	public void setHP(double HP) {
 		this.HP = HP;
-	}
-	public void setEVS(double EVS) {
-		this.EVS = EVS;
 	}
 	public void setATK(double ATK) {
 		this.ATK = ATK;
@@ -41,7 +37,30 @@ public abstract class Entity {
 	public void setLVL(int LVL) {
 		this.LVL = LVL;
 	}
-	
+	public void setmaxHP(double maxHP) {
+		this.maxHP = maxHP;
+	}
+	public Position getPOS() {
+		return POS;
+	}
+	public double getATK() {
+		return ATK;
+	}
+	public double getHP() {
+		return HP;
+	}
+	public double getDEF() {
+		return DEF;
+	}
+	public int getSPD() {
+		return SPD;
+	}
+	public int getLVL() {
+		return LVL;
+	}
+	public double getmaxHP() {
+		return maxHP;
+	}
 	/**
 	 * A polymorphic copy method for subclasses to override.
 	 * This method must be preferred over a copy constructor,
