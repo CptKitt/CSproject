@@ -7,8 +7,9 @@ import java.util.Random;
 import java.util.Set;
 
 public class Enemy extends Entity {
-	public Enemy(double HP, double EVS, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP) {
-		super(HP, EVS, ATK, DEF, SPD, POS, LVL);
+	private String type;
+	public Enemy(double HP, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP, String type) {
+		super(HP, ATK, DEF, SPD, POS, LVL);
 	}
 	/** Takes the floor level of the dungeon and generates a random enemy based on it **/
 	public static Enemy randomEnemy(int Floor) {
