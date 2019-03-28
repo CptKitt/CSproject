@@ -535,7 +535,7 @@ public final class MapGenerator {
             }
             // not covered and far enough away from players
             if (map[pos.x][pos.y] == null && players.stream()
-                    .allMatch(player -> player.POS.distanceTo(pos) > minDist)) {
+                    .allMatch(player -> player.getPOS().distanceTo(pos) > minDist)) {
                 stairs = newStairs(pos);
                 map[pos.x][pos.y] = stairs;
                 break;
@@ -546,7 +546,7 @@ public final class MapGenerator {
     }
     
     /** Places and returns enemies on the Map. */
-    static List<Enemy> placeEnemies(Entity[][] map, List<Player> players) {
+    static List<Enemy> placeEnemies(Entity[][] map, List<Player> players, int floor) {
         List<Enemy> enemies = new ArrayList<>();
         int minDist = (map.length + map[0].length) / 8;
         resetCount();
@@ -565,11 +565,11 @@ public final class MapGenerator {
             
             if (map[pos.x][pos.y] != null ||
                     players.stream().anyMatch(
-                            player -> player.POS.distanceTo(pos) < minDist)) {
+                            player -> player.getPOS().distanceTo(pos) < minDist)) {
                 i--;
             }
             else {
-                Enemy enemy = newEnemy(pos, players.get(0));
+                Enemy enemy = newEnemy(pos, floor);
                 enemies.add(enemy);
                 map[pos.x][pos.y] = enemy;
             }
@@ -670,8 +670,8 @@ public final class MapGenerator {
     }
     
     /** Function to return an enemy. */
-    private static Enemy newEnemy(Position position, Player player) {
-        Enemy enemy = Enemy.randomEnemy(player);
+    private static Enemy newEnemy(Position position, int Floor) {
+        Enemy enemy = Enemy.randomEnemy(Floor);
         enemy.setPOS(position);
         return enemy;
     }

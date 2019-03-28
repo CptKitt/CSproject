@@ -250,7 +250,7 @@ public final class Map implements Pathfinding.Delegate {
 		
 		MapGenerator.placePlayers(entities, players);
 		stairs = MapGenerator.placeStairs(entities, players);
-		enemies = MapGenerator.placeEnemies(entities, players);
+		enemies = MapGenerator.placeEnemies(entities, players, floor);
 		
 		updateVisibility();
 	}
@@ -273,20 +273,20 @@ public final class Map implements Pathfinding.Delegate {
 		
 		// get moves and range
 		Set<Position> moves = possibleMovesForEntity(p);
-		int range = entities[p.x][p.y].SPD;
+		int range = entities[p.x][p.y].getSPD();
 		
 		// add enemy attacks
-		moves.addAll(enemies.stream().map(enemy -> enemy.POS).filter(pos ->
+		moves.addAll(enemies.stream().map(enemy -> enemy.getPOS()).filter(pos ->
 				// enemy in range of attack and open square next to the position
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
 		
 		// add stairs
-		if (Pathfinding.shortestPath(this, p, stairs.POS).size() < range
+		if (Pathfinding.shortestPath(this, p, stairs.getPOS()).size() < range
 				&& moves.stream().anyMatch(
-						pos -> pos.distanceTo(stairs.POS) == 1)) {
-			moves.add(stairs.POS);
+						pos -> pos.distanceTo(stairs.getPOS()) == 1)) {
+			moves.add(stairs.getPOS());
 		}
 		
 		return moves;
@@ -306,10 +306,10 @@ public final class Map implements Pathfinding.Delegate {
 		
 		// get moves and range
 		Set<Position> moves = possibleMovesForEntity(p);
-		int range = entities[p.x][p.y].SPD;
+		int range = entities[p.x][p.y].getSPD();
 		
 		// add player attacks
-		moves.addAll(players.stream().map(player -> player.POS).filter(pos ->
+		moves.addAll(players.stream().map(player -> player.getPOS()).filter(pos ->
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
@@ -384,11 +384,11 @@ public final class Map implements Pathfinding.Delegate {
 			
 			// ask player to attack enemy
 			Enemy enemy = (Enemy) entity2;
-			turn.attackPos = enemy.POS;
+			turn.attackPos = enemy.getPOS();
 			player.attack(enemy);
 			
 			// killed enemy, remove
-			if (enemy.HP <= 0) {
+			if (enemy.getHP() <= 0) {
 				enemies.remove(enemy);
 				entities[p2.x][p2.y] = null;
 				logMessage("You defeated the enemy!");
@@ -401,8 +401,8 @@ public final class Map implements Pathfinding.Delegate {
 		// action successfully completed, finish
 		updateVisibility();
 		
-		moved.add(player.POS);
-		turn.end = player.POS;
+		moved.add(player.getPOS());
+		turn.end = player.getPOS();
 		turn.pathfind(this);
 		return turn;
 	}
@@ -429,7 +429,7 @@ public final class Map implements Pathfinding.Delegate {
 		}
 		
 		return Pathfinding.movementForPosition(
-				this, p, entities[p.x][p.y].SPD);
+				this, p, entities[p.x][p.y].getSPD());
 	}
 	
 	/**
@@ -446,7 +446,7 @@ public final class Map implements Pathfinding.Delegate {
 		for (Enemy enemy : enemies) {
 			Turn turn = new Turn();
 			
-			Position p1 = enemy.POS;
+			Position p1 = enemy.getPOS();
 			turn.start = p1;
 			
 			// ask enemy for move
@@ -483,11 +483,11 @@ public final class Map implements Pathfinding.Delegate {
 				
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
-				turn.attackPos = player.POS;
+				turn.attackPos = player.getPOS();
 				enemy.attack(player);
 				
 				// game over (?)
-				if (player.HP <= 0) {
+				if (player.getHP() <= 0) {
 					players.remove(player);
 					entities[p2.x][p2.y] = null;
 					logMessage("A character has died.");
@@ -499,7 +499,7 @@ public final class Map implements Pathfinding.Delegate {
 				continue;
 			}
 			
-			turn.end = enemy.POS;
+			turn.end = enemy.getPOS();
 			turn.pathfind(this);
 			turns.add(turn);
 		}
