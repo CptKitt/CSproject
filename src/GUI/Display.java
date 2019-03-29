@@ -9,33 +9,25 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
-import java.io.File;
 
-//TODO: Add sidebar
 public class Display {
 	public static final double size = 32d;
+	
 	//environment (walls, floors, et cetera)
-	private Image floor = new Image("GUI/assets/environment/tile1.png",size,size,true,false);
-	private Image wall = new Image("GUI/assets/environment/wall2.png",size,size,true,false);
-	private Image space = new Image("GUI/assets/environment/wall3.png",size,size,true,false);
-	private Image highlight = new Image("GUI/assets/overlays/move_highlight.png",size,size,true,false);
-	private Image shade = new Image("GUI/assets/overlays/night_overlay.png",size,size,true,false);
-	private Image upstairs = new Image("GUI/assets/environment/stairs_up.png",size,size,true,false);
-	private Image downstairs = new Image("GUI/assets/environment/stairs_down.png",size,size,true,false);
+	private static Image floor, wall, space, highlight;
+	private static Image shade, upstairs, downstairs;
 
 	//entities (players, enemies)
-	private Image red_slime = new Image("GUI/assets/slimes/red_slime.png",size,size,true,false);
-	private Image orange_slime = new Image("GUI/assets/slimes/orange_slime.png",size,size,true,false);
-	private Image yellow_slime = new Image("GUI/assets/slimes/yellow_slime.png",size,size,true,false);
-	private Image green_slime = new Image("GUI/assets/slimes/green_slime.png",size,size,true,false);
-	private Image cyan_slime = new Image("GUI/assets/slimes/cyan_slime.png",size,size,true,false);
-	private Image blue_slime = new Image("GUI/assets/slimes/blue_slime.png",size,size,true,false);
-	private Image purple_slime = new Image("GUI/assets/slimes/purple_slime.png",size,size,true,false);
-	private Image rainbow_slime = new Image("GUI/assets/slimes/rainbow_slime.png",size,size,true,false);
-	private Image white_slime = new Image("GUI/assets/slimes/white_slime.png",size,size,true,false);
-	private Image black_slime = new Image("GUI/assets/slimes/black_slime.png",size,size,true,false);
+	private static Image red_slime, orange_slime, yellow_slime;
+	private static Image green_slime, cyan_slime, blue_slime;
+	private static Image purple_slime, rainbow_slime;
+	private static Image white_slime, black_slime;
 
-	private Image hero = new Image("GUI/assets/player1.png",size,size,true,false);
+	private static Image hero;
+	
+	static {
+		loadImages();
+	}
 
 	/**Draw the map on the screen.
 	*@param m is a Map that gets drawn.
@@ -153,5 +145,50 @@ public class Display {
 
 		info.getChildren().add(topbox);
 
+	}
+	
+	/** Attempts to load GUI images. */
+	private static void loadImages() {
+		String env = "environment/";
+		String over = "overlays/";
+		String slime = "slimes/";
+		
+		floor = asset(env + "tile1");
+		wall = asset(env + "wall2");
+		space = asset(env + "wall3");
+		highlight = asset(over + "move_highlight");
+		shade = asset(over + "night_overlay");
+		upstairs = asset(env + "stairs_up");
+		downstairs = asset(env + "stairs_down");
+		
+		red_slime = asset(slime + "red_slime");
+		orange_slime = asset(slime + "orange_slime");
+		yellow_slime = asset(slime + "yellow_slime");
+		green_slime = asset(slime + "green_slime");
+		cyan_slime = asset(slime + "cyan_slime");
+		blue_slime = asset(slime + "blue_slime");
+		purple_slime = asset(slime + "purple_slime");
+		rainbow_slime = asset(slime + "rainbow_slime");
+		white_slime = asset(slime + "white_slime");
+		black_slime = asset(slime + "black_slime");
+		
+		hero = asset("player1");
+	}
+	
+	/**
+	 * Image loading function that crashes if the asset is not found.
+	 * @param name The name of the PNG asset.
+	 * @return A newly initialized Image.
+	 */
+	private static Image asset(String name) {
+		String path = "GUI/assets/" + name + ".png";
+		try {
+			return new Image(path, size, size, true, false);
+		}
+		catch (IllegalArgumentException iae) {
+			System.out.println("Missing image at URL: " + path);
+			System.exit(100);
+			return null; // should never run
+		}
 	}
 }
