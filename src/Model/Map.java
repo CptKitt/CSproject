@@ -44,9 +44,6 @@ public final class Map implements Pathfinding.Delegate {
 	/** The current floor number. Affects map generation. */
 	private int floor;
 	
-	// TODO: remove temporary set in favor of Entity.stamina
-	private Set<Position> moved = new HashSet<>();
-	
 	// Static variables
 	
 	/**
@@ -226,7 +223,9 @@ public final class Map implements Pathfinding.Delegate {
 	public void nextFloor() {
 		floor += 1;
 		visibility = new double[getWidth()][getHeight()];
-		moved.clear();
+		for (Player player : players) {
+			player.setSTM(player.getSPD());
+		}
 		
 		// different types based on floor
 		if (floor <= 10) {
@@ -266,14 +265,12 @@ public final class Map implements Pathfinding.Delegate {
 			return new HashSet<>();
 		}
 		
-		// TODO: replace with stamina checks
-		if (moved.contains(p)) { // already moved
+		// get moves and range
+		int range = ((Player) entities[p.x][p.y]).getSTM();
+		if (range == 0) {
 			return new HashSet<>();
 		}
-		
-		// get moves and range
-		Set<Position> moves = possibleMovesForEntity(p);
-		int range = entities[p.x][p.y].getSPD();
+		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add enemy attacks
 		moves.addAll(enemies.stream().map(enemy -> enemy.getPOS()).filter(pos ->
@@ -305,8 +302,8 @@ public final class Map implements Pathfinding.Delegate {
 		}
 		
 		// get moves and range
-		Set<Position> moves = possibleMovesForEntity(p);
 		int range = entities[p.x][p.y].getSPD();
+		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add player attacks
 		moves.addAll(players.stream().map(player -> player.getPOS()).filter(pos ->
@@ -401,9 +398,17 @@ public final class Map implements Pathfinding.Delegate {
 		// action successfully completed, finish
 		updateVisibility();
 		
-		moved.add(player.getPOS());
 		turn.end = player.getPOS();
 		turn.pathfind(this);
+		
+		// update player stamina
+		if (turn.attackPos != null) {
+			player.setSTM(0);
+		}
+		else {
+			player.setSTM(player.getSTM() - turn.path.size() - 1);
+		}
+		
 		return turn;
 	}
 	
@@ -412,7 +417,10 @@ public final class Map implements Pathfinding.Delegate {
 	 * @return A List of actions that were taken by enemies.
 	 */
 	public List<Turn> endTurn() {
-		moved.clear();
+		// reset player stamina
+		for (Player player : players) {
+			player.setSTM(player.getSPD());
+		}
 		
 		return processEnemyMoves();
 	}
@@ -423,13 +431,12 @@ public final class Map implements Pathfinding.Delegate {
 	 * @param p The Position of the Entity.
 	 * @return A Set of Positions that the Entity can move to.
 	 */
-	private Set<Position> possibleMovesForEntity(Position p) {
-		if (entities[p.x][p.y] == null) {
+	private Set<Position> possibleMovesForEntity(Position p, int range) {
+		if (entities[p.x][p.y] == null || range <= 0) {
 			return new HashSet<>();
 		}
 		
-		return Pathfinding.movementForPosition(
-				this, p, entities[p.x][p.y].getSPD());
+		return Pathfinding.movementForPosition(this, p, range);
 	}
 	
 	/**
