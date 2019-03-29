@@ -10,6 +10,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 
+/**
+ * Class for displaying Maps as JavaFX.
+ */
 public class Display {
 	public static final double size = 32d;
 	
@@ -28,13 +31,13 @@ public class Display {
 	static {
 		loadImages();
 	}
-
-	/**Draw the map on the screen.
-	*@param m is a Map that gets drawn.
-	*@param g is a GraphicsContext used like a canvas to draw the map onto .
-	*@param highlighted is a set of positions used to draw the move overlay.
-	*
-	*/
+	
+	/**
+	 * Draw the map on the screen.
+	 * @param m is a Map that gets drawn.
+	 * @param g is a GraphicsContext used like a canvas to draw the map onto .
+	 * @param highlighted is a set of positions used to draw the move overlay.
+	 */
 	public void drawMapOnScene(Map m, GraphicsContext g, Set<Position> highlighted) {
 		Entity[][] grid = m.getGrid();
 		double[][] visgrid = m.getVisibility();
@@ -46,13 +49,13 @@ public class Display {
 				Entity e = grid[i][j];
 
 				if (e instanceof Obstacle) { //draw walls
-            if (i<grid.length-1 && grid[i+1][j] instanceof Obstacle) {
-                g.drawImage(space,j*size,i*size);
-            }
-            else {
-                g.drawImage(wall,j*size,i*size);
-            }
-        }
+		            if (i<grid.length-1 && grid[i+1][j] instanceof Obstacle) {
+		                g.drawImage(space,j*size,i*size);
+		            }
+		            else {
+		                g.drawImage(wall,j*size,i*size);
+		            }
+		        }
 				else if (e instanceof Stairs) { //draw stairs
 					g.drawImage(downstairs,j*size,i*size);
 				}
@@ -60,9 +63,9 @@ public class Display {
 					//TODO: add other slime colours
 					g.drawImage(green_slime,j*size,i*size);
 				}
-        else if (grid[i][j] instanceof Player) {//draw players
-            g.drawImage(hero,j*size,i*size);
-        }
+		        else if (grid[i][j] instanceof Player) {//draw players
+		            g.drawImage(hero,j*size,i*size);
+		        }
 
 				if (highlighted.contains(new Position(i,j))) { //draw move overlay
 					g.drawImage(highlight,j*size,i*size);
@@ -78,7 +81,13 @@ public class Display {
 			}
 		}
 	}
-
+	
+	/**
+	 * Draws the info box on the screen.
+	 * @param m The Map associated with the Display.
+	 * @param info The Group to draw to.
+	 * @param ent The Entity to display information for.
+	 */
 	public void drawInfoOnScene(Map m, Group info, Entity ent) {
 		ImageView portrait = new ImageView();
 		Image picture;
