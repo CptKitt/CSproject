@@ -28,8 +28,8 @@ public class TextMain {
 					for (int j = 0; j < grid[i].length; j++) {
 						Entity entity = grid[i][j];
 						if (entity instanceof Player) {
-							if (entity.maxHP == userChar.maxHP && entity.HP == userChar.HP) {
-								userChar.POS = new Position(i,j);
+							if (entity.getmaxHP() == userChar.getmaxHP() && entity.getHP() == userChar.getHP()) {
+								userChar.setPOS(new Position(i,j));
 								i = grid.length;
 								break;
 							}
@@ -37,10 +37,10 @@ public class TextMain {
 					}
 				}
 				//Displaying the map indicating one character and prompting for input
-				display.printMap(map, map.possibleMovesForCharacter(userChar.POS));
+				display.printMap(map, map.possibleMovesForCharacter(userChar.getPOS()));
 				System.out.println("Floor: " + map.getFloor() + " " + map.getType());
 				Position move = input.moveInput();
-				map.processAction(userChar.POS, move);
+				map.processAction(userChar.getPOS(), move);
 				if (move != null) {
 					map.logMessage("Character moved to: " + move);
 					
