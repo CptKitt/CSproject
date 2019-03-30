@@ -28,6 +28,8 @@ public class GUIMain extends Application {
 	private Position selectedPosition;
 	private int selectHint = 0;
 	private Set<Position> possibleMoves;
+	
+	private boolean animating = false;
 
 	/** The width of the application. */
 	public static final double WIDTH = 30 * Display.size + 300;
@@ -84,12 +86,12 @@ public class GUIMain extends Application {
 	 * @param event The KeyEvent to process.
 	 */
 	private void keyboardPress(KeyEvent event) {
+		if (animating) return;
+		
 		Position toMove = null;
 		switch (event.getCode()) {
-			case SPACE: // end enemy turn
-				selectedPosition = null;
-				System.out.println("enemy turns: " + map.endTurn());
-				redrawMap();
+			case SPACE: // end player turn
+				endTurn();
 				break;
 				
 			case BACK_SPACE: // debug
@@ -132,26 +134,28 @@ public class GUIMain extends Application {
 		
 		// movement key pressed
 		if (toMove != null) {
-			Turn playerTurn = map.processAction(selectedPosition, toMove);
-			if (playerTurn != null) {
-				selectedPosition = toMove;
-				redrawMap();
+			Position start = selectedPosition;
+			selectedPosition = toMove;
+			if (!playerTurn(start, toMove)) {
+				selectedPosition = start;
 			}
 		}
 	}
-
+	
 	/**
 	 * Event handling function for clicks in the scene.
 	 * @param event The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent event) {
+		if (animating) return;
+		
 		// convert coordinates to account for drawing
 		int x = (int) (event.getSceneX() / Display.size);
 		int y = (int) (event.getSceneY() / Display.size);
 
 		// click in sidebar
-		if (x > 30) {
-			System.out.println("enemy turns: " + map.endTurn());
+		if (x >= 30) {
+			endTurn();
 		}
 		// map click
 		else {
@@ -165,19 +169,67 @@ public class GUIMain extends Application {
 			// first click
 			if (selectedPosition == null) {
 				selectedPosition = pos;
+				redrawMap();
 			}
 			// second click: try performing action
 			else {
-				// TODO: implement end turn event checks
-				Turn playerTurn = map.processAction(selectedPosition, pos);
-				System.out.println("player turn: " + playerTurn);
-
-				selectedPosition = null;
+				if (map.getPlayers().stream()
+						.anyMatch(player -> player.getPOS().equals(pos))) {
+					selectedPosition = pos.equals(selectedPosition) ? null : pos;
+					redrawMap();
+				}
+				else {
+					Position start = selectedPosition;
+					selectedPosition = pos;
+					if (!playerTurn(start, pos)) {
+						selectedPosition = null;
+						redrawMap();
+					}
+				}
 			}
 		}
-
-		// update display
+	}
+	
+	/** Returns true if the player turn is completed. */
+	private boolean playerTurn(Position start, Position end) {
+		if (start == null || end == null) {
+			return false;
+		}
+		
+		boolean nextFloor = map.getGrid()[end.x][end.y] instanceof Stairs;
+		
+		Turn playerTurn = map.processAction(start, end);
+		if (playerTurn != null) {
+			animating = true;
+			
+			display.animateTurn(playerTurn, event -> {
+				// special case: fade to black
+				if (nextFloor) {
+					display.fadeToBlack(event2 -> {
+						redrawMap();
+						animating = false;
+					});
+				}
+				else {
+					redrawMap();
+					animating = false;
+				}
+			});
+		}
+		
+		return playerTurn != null;
+	}
+	
+	/** Ends the player turn and animates enemy turns. */
+	private void endTurn() {
+		selectedPosition = null;
 		redrawMap();
+		
+		animating = true;
+		display.animateTurns(map.endTurn(), e -> {
+			animating = false;
+			redrawMap();
+		});
 	}
 	
 	/** Runs possible move calculations and asks Display to redraw the map. */

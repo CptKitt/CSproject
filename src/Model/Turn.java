@@ -22,6 +22,9 @@ public final class Turn {
     /** A Position that the Entity attacked. May be null. */
     public Position attackPos;
     
+    /** The damage dealt to the attacked Entity. */
+    public int damage;
+    
     /** Creates a Turn with all variables null. */
     public Turn() { }
     

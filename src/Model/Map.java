@@ -361,6 +361,8 @@ public final class Map implements Pathfinding.Delegate {
 			// refresh map
 			nextFloor();
 			turn.end = p2;
+			turn.pathfind(this);
+			return turn;
 		}
 		// destination is an enemy
 		else if (entity2 instanceof Enemy) {
@@ -382,7 +384,9 @@ public final class Map implements Pathfinding.Delegate {
 			// ask player to attack enemy
 			Enemy enemy = (Enemy) entity2;
 			turn.attackPos = enemy.getPOS();
+			turn.damage = (int) Math.ceil(enemy.getHP());
 			player.attack(enemy);
+			turn.damage -= (int) Math.ceil(enemy.getHP());
 			
 			// killed enemy, remove
 			if (enemy.getHP() <= 0) {
@@ -491,7 +495,9 @@ public final class Map implements Pathfinding.Delegate {
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
 				turn.attackPos = player.getPOS();
+				turn.damage = (int) Math.ceil(player.getHP());
 				enemy.attack(player);
+				turn.damage -= (int) Math.ceil(player.getHP());
 				
 				// game over (?)
 				if (player.getHP() <= 0) {
