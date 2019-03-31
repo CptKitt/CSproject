@@ -122,44 +122,29 @@ public final class Map implements Pathfinding.Delegate {
 	
 	/** @return A copy of the entities represented by this Map. */
 	public Entity[][] getGrid() {
-		Entity[][] copy = new Entity[getWidth()][getHeight()];
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				if (entities[x][y] != null) {
-					copy[x][y] = entities[x][y].copy();
-				}
-			}
-		}
-		return copy;
+		return Arrays.stream(entities).map(arr ->
+				Arrays.stream(arr).map(entity -> entity == null ? null : entity.copy())
+						.toArray(Entity[]::new))
+				.toArray(Entity[][]::new);
 	}
 	
 	/** @return A copy of the visibility of the Map. */
 	public double[][] getVisibility() {
-		double[][] copy = new double[getWidth()][getHeight()];
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				copy[x][y] = visibility[x][y];
-			}
-		}
-		return copy;
+		return Arrays.stream(visibility)
+				.map(arr -> Arrays.copyOf(arr, getHeight()))
+				.toArray(double[][]::new);
 	}
 	
 	/** @return A copy of the Players on the Map. */
 	public List<Player> getPlayers() {
-		List<Player> copy = new ArrayList<>();
-		for (Player player : players) {
-			copy.add((Player) player.copy());
-		}
-		return copy;
+		return players.stream().map(player -> (Player) player.copy())
+				.collect(Collectors.toList());
 	}
 	
 	/** @return A copy of the Enemies on the Map. */
 	public List<Enemy> getEnemies() {
-		List<Enemy> copy = new ArrayList<>();
-		for (Enemy enemy : enemies) {
-			copy.add((Enemy) enemy.copy());
-		}
-		return copy;
+		return enemies.stream().map(enemy -> (Enemy) enemy.copy())
+				.collect(Collectors.toList());
 	}
 	
 	/** @return The floor number. */
@@ -190,20 +175,8 @@ public final class Map implements Pathfinding.Delegate {
 	
 	/** Updates visibility for the whole Map. */
 	private void updateVisibility() {
-		List<Position> toUpdate = new ArrayList<>();
-		
-		// look for players
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				Entity entity = entities[x][y];
-				if (entity instanceof Player) {
-					toUpdate.add(new Position(x, y));
-				}
-			}
-		}
-		
 		// go through each player position
-		for (Position pos: toUpdate) {
+		players.stream().map(Player::getPOS).forEach(pos -> {
 			for (Position pos2 : Pathfinding.visibility(this, pos, 7)) {
 				// check OOB
 				if (!positionOnMap(pos2)) {
@@ -216,36 +189,34 @@ public final class Map implements Pathfinding.Delegate {
 					visibility[pos2.x][pos2.y] = Math.min(1, opacity);
 				}
 			}
-		}
+		});
 	}
 	
 	/** Increments the floor number and recreates the Map. */
 	public void nextFloor() {
 		floor += 1;
+		
+		// reset variables
 		visibility = new double[getWidth()][getHeight()];
-		for (Player player : players) {
-			player.setSTM(player.getSPD());
-		}
+		players.forEach(player -> player.setSTM(player.getSPD()));
 		
 		// different types based on floor
-		if (floor <= 10) {
+		if (floor <= 3) {
 			type = Type.TOWER;
 			entities = MapGenerator.generateCircle(getWidth(), getHeight());
 		}
-		else if (floor <= 20) {
+		else if (floor <= 6) {
 			type = Type.CAVE;
 			entities = MapGenerator.generateCave(getWidth(), getHeight());
 		}
-		else if (floor <= 30) {
+		else if (floor <= 9) {
 			type = Type.DUNGEON;
 			entities = MapGenerator.generateDungeon(getWidth(), getHeight());
 		}
 		else {
-			entities = new Entity[getWidth()][getHeight()];
+			type = Type.DUNGEON;
+			entities = MapGenerator.generateBossRoom(getWidth(), getHeight());
 		}
-		
-		// TODO: remove
-		entities = MapGenerator.randomMap(getWidth(), getHeight());
 		
 		MapGenerator.placePlayers(entities, players);
 		stairs = MapGenerator.placeStairs(entities, players);
@@ -273,7 +244,7 @@ public final class Map implements Pathfinding.Delegate {
 		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add enemy attacks
-		moves.addAll(enemies.stream().map(enemy -> enemy.getPOS()).filter(pos ->
+		moves.addAll(enemies.stream().map(Enemy::getPOS).filter(pos ->
 				// enemy in range of attack and open square next to the position
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
@@ -306,7 +277,7 @@ public final class Map implements Pathfinding.Delegate {
 		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add player attacks
-		moves.addAll(players.stream().map(player -> player.getPOS()).filter(pos ->
+		moves.addAll(players.stream().map(Player::getPOS).filter(pos ->
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
@@ -422,9 +393,7 @@ public final class Map implements Pathfinding.Delegate {
 	 */
 	public List<Turn> endTurn() {
 		// reset player stamina
-		for (Player player : players) {
-			player.setSTM(player.getSPD());
-		}
+		players.forEach(player -> player.setSTM(player.getSPD()));
 		
 		return processEnemyMoves();
 	}
@@ -504,7 +473,6 @@ public final class Map implements Pathfinding.Delegate {
 					players.remove(player);
 					entities[p2.x][p2.y] = null;
 					logMessage("A character has died.");
-					// TODO: do something after game over
 				}
 			}
 			else {

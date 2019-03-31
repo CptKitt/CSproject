@@ -25,7 +25,7 @@ public class GUIMain extends Application {
 	private Canvas canvas;
 	private Group infoGroup;
 
-	private Position hoverPosition;
+	private Position hoverPosition = Position.ORIGIN;
 	private Position selectedPosition;
 	private int selectHint = 0;
 	private Set<Position> possibleMoves;
@@ -242,6 +242,11 @@ public class GUIMain extends Application {
 			// no moves available, deselect position
 			if (possibleMoves.isEmpty()) {
 				selectedPosition = null;
+				display.drawInfoOnScene(map, infoGroup, null);
+			}
+			else {
+				Entity selected = map.getGrid()[selectedPosition.x][selectedPosition.y];
+				display.drawInfoOnScene(map, infoGroup, selected);
 			}
 		}
 		else {
@@ -267,8 +272,7 @@ public class GUIMain extends Application {
 		}
 
 		// no significant movement
-		if ((pos == null && hoverPosition == null)
-				|| (pos != null && pos.equals(hoverPosition))) {
+		if (pos != null && pos.equals(hoverPosition)) {
 			return;
 		}
 		hoverPosition = pos;

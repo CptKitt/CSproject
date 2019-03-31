@@ -25,15 +25,11 @@ public final class MapGenerator {
     
     /** Generates one of the possible map types. */
     static Entity[][] randomMap(int width, int height) {
-        int num = rand.nextInt(3);
-        if (num == 0) {
-            return generateCave(width, height);
-        }
-        else if (num == 1){
-            return generateCircle(width, height);
-        }
-        else {
-            return generateDungeon(width, height);
+        switch (rand.nextInt(3)) {
+            case 0: return generateCave(width, height);
+            case 1: return generateCircle(width, height);
+            case 2: return generateDungeonHallway(width, height);
+            default: return new Entity[width][height];
         }
     }
     
@@ -50,7 +46,7 @@ public final class MapGenerator {
                     map[x][y] = null;
                 }
                 else {
-                    map[x][y] = newWall(x, y);
+                    newWall(map, x, y);
                 }
             }
         }
@@ -85,8 +81,7 @@ public final class MapGenerator {
                     map[x][y] = null;
                 }
                 else {
-                    // wall
-                    map[x][y] = newWall(x, y);
+                    newWall(map, x, y);
                 }
             }
         }
@@ -100,10 +95,10 @@ public final class MapGenerator {
             int cx = (int) centerX;
             int cy = (int) centerY;
             for (int x = 0; x < width; x++) {
-                map[x][cy] = newWall(x, cy);
+                newWall(map, x, cy);
             }
             for (int y = 0; y < height; y++) {
-                map[cx][y] = newWall(cx, y);
+                newWall(map, cx, y);
             }
             
             // generate doors
@@ -137,7 +132,7 @@ public final class MapGenerator {
                     double dy = y - centerY + 0.5;
                     
                     if (Math.pow(dx / w, 2) + Math.pow(dy / h, 2) < 1) {
-                        map[x][y] = newWall(x, y);
+                        newWall(map, x, y);
                     }
                 }
             }
@@ -164,8 +159,8 @@ public final class MapGenerator {
         int botY = height/2 + rand.nextInt(height/2 - 4) + 1;
         
         for (int x = 0; x < width; x++) {
-            map[x][topY] = newWall(x, topY);
-            map[x][botY] = newWall(x, botY);
+            newWall(map, x, topY);
+            newWall(map, x, botY);
         }
         
         // top rooms
@@ -177,7 +172,7 @@ public final class MapGenerator {
             }
             else {
                 for (int y = 0; y < topY; y++) {
-                    map[x][y] = newWall(x, y);
+                    newWall(map, x, y);
                 }
             }
             door = !door;
@@ -198,7 +193,7 @@ public final class MapGenerator {
             }
             else {
                 for (int y = height-1; y > botY; y--) {
-                    map[x][y] = newWall(x, y);
+                    newWall(map, x, y);
                 }
             }
         
@@ -473,25 +468,58 @@ public final class MapGenerator {
         return map;
     }
     
+    /** Generates a boss room. */
+    static Entity[][] generateBossRoom(int width, int height) {
+        Entity[][] map = new Entity[width][height];
+        
+        // double bordered walls
+        for (int x = 0; x < map.length; x++) {
+            for (int y = 0; y < map[0].length; y++) {
+                if (x < 2 || x > map.length - 3 || y < 2 || y > map[0].length - 3) {
+                    newWall(map, x, y);
+                }
+            }
+        }
+        
+        // pillars
+        int xDist = (width - 4) / 4;
+        int yDist = (height - 4) / 4;
+        for (int x = xDist-1; x < width - 2; x += xDist) {
+            for (int y = yDist-1; y < height - 2; y += yDist) {
+                newWall(map, x, y);
+                newWall(map, x+1, y);
+                newWall(map, x, y+1);
+                newWall(map, x+1, y+1);
+            }
+        }
+        
+        // marker for placement functions
+        map[0][0] = null;
+        return map;
+    }
+    
     /** Places player(s) on the Map. */
     static void placePlayers(Entity[][] map, List<Player> players) {
         int width = map.length;
         int height = map[0].length;
-        // random starting point
         Position start;
-        do {
-            start = new Position(
-                    rand.nextInt(width),
-                    rand.nextInt(height));
-        } while (map[start.x][start.y] != null);
+        
+        // special case: boss room
+        if (!(map[0][0] instanceof Obstacle)) {
+            start = new Position(width - 4, height/2);
+        }
+        else {
+            // random starting point
+            do {
+                start = new Position(
+                        rand.nextInt(width),
+                        rand.nextInt(height));
+            } while (map[start.x][start.y] != null);
+        }
     
         // place new player
         if (players.isEmpty()) {
-            map[start.x][start.y] = newPlayer(start);
-        
-            Player player = newPlayer(start);
-            players.add(player);
-            map[start.x][start.y] = player;
+            players.add(newPlayer(map, start));
         }
         // place existing players nearby
         else {
@@ -517,6 +545,11 @@ public final class MapGenerator {
     
     /** Places stairs on the Map. */
     static Stairs placeStairs(Entity[][] map, List<Player> players) {
+        // special case: boss room
+        if (map[0][0] == null) {
+            return newStairs(map, Position.ORIGIN);
+        }
+    
         Stairs stairs;
         int minDist = (map.length + map[0].length) / 6;
         resetCount();
@@ -529,20 +562,14 @@ public final class MapGenerator {
             
             // too many tries, allow any position
             if (count() > 1000 && map[pos.x][pos.y] == null) {
-                stairs = newStairs(pos);
-                map[pos.x][pos.y] = stairs;
-                break;
+                return newStairs(map, pos);
             }
             // not covered and far enough away from players
             if (map[pos.x][pos.y] == null && players.stream()
                     .allMatch(player -> player.getPOS().distanceTo(pos) > minDist)) {
-                stairs = newStairs(pos);
-                map[pos.x][pos.y] = stairs;
-                break;
+                return newStairs(map, pos);
             }
         }
-        
-        return stairs;
     }
     
     /** Places and returns enemies on the Map. */
@@ -550,18 +577,24 @@ public final class MapGenerator {
         List<Enemy> enemies = new ArrayList<>();
         int minDist = (map.length + map[0].length) / 8;
         resetCount();
+    
+        // special case: boss room
+        if (!(map[0][0] instanceof Obstacle)) {
+            // place STRONK enemy
+            Enemy boss = Enemy.randomEnemy(floor * 2);
+            boss.setSPD(5);
+            boss.setPOS(new Position(4, map[0].length/2));
+            map[4][map[0].length/2] = boss;
+            enemies.add(boss);
+        }
         
         // random number of enemies
         int num = rand.nextInt(5) + 3;
-        for (int i = 0; i < num; i++) {
+        for (int i = 0; i < num && count() < 1000; i++) {
             // find position away from player
             Position pos = new Position(
                     rand.nextInt(map.length),
                     rand.nextInt(map[0].length));
-            
-            if (count() > 1000) {
-                break;
-            }
             
             if (map[pos.x][pos.y] != null ||
                     players.stream().anyMatch(
@@ -569,9 +602,7 @@ public final class MapGenerator {
                 i--;
             }
             else {
-                Enemy enemy = newEnemy(pos, floor);
-                enemies.add(enemy);
-                map[pos.x][pos.y] = enemy;
+                enemies.add(newEnemy(map, pos, floor));
             }
         }
         
@@ -597,25 +628,25 @@ public final class MapGenerator {
             int width = lines.get(0).length();
             int height = lines.size();
             
-            Entity[][] entities = new Entity[width][height];
+            Entity[][] map = new Entity[width][height];
             
             // read information
             for (int y = 0; y < height; y++) {
                 String line = lines.get(y);
                 for (int x = 0; x < width; x++) {
                     if (line.charAt(x) == ' ') { // empty space
-                        entities[x][y] = null;
+                        map[x][y] = null;
                     }
                     else if (line.charAt(x) == 'W') { // wall
-                        entities[x][y] = newWall(x, y);
+                        newWall(map, x, y);
                     }
                     else if (line.charAt(x) == 'C') { // some character
-                        entities[x][y] = newPlayer(new Position(x, y));
+                        newPlayer(map, new Position(x, y));
                     }
                 }
             }
             
-            return entities;
+            return map;
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -628,51 +659,51 @@ public final class MapGenerator {
     private static void fillWalls(Entity[][] map) {
         for (int x = 0; x < map.length; x++) {
             for (int y = 0; y < map[0].length; y++) {
-                map[x][y] = newWall(x, y);
+                newWall(map, x, y);
             }
         }
     }
     
     /** Convenience function to fill the border of the map with walls. */
     private static void wallBorder(Entity[][] map) {
-        int maxX = map.length - 1, maxY = map[0].length - 1;
-        
-        for (int x = 0; x <= maxX; x++) {
-            map[x][0] = newWall(x, 0);
-            map[x][maxY] = newWall(x, maxY);
-        }
-        
-        for (int y = 0; y <= maxY; y++) {
-            map[0][y] = newWall(0, y);
-            map[maxX][y] = newWall(maxX, y);
+        for (int x = 0; x < map.length; x++) {
+            for (int y = 0; y < map[0].length; y++) {
+                if (x == 0 || x == map.length-1 || y == 0 || y == map[0].length-1) {
+                    newWall(map, x, y);
+                }
+            }
         }
     }
     
-    /** Function to create stairs. */
-    private static Stairs newStairs(Position position) {
+    /** Function to place stairs. */
+    private static Stairs newStairs(Entity[][] map, Position position) {
         Stairs stairs = new Stairs();
         stairs.setPOS(position);
+        map[position.x][position.y] = stairs;
         return stairs;
     }
     
-    /** Function to create a wall. */
-    private static Obstacle newWall(int x, int y) {
+    /** Function to place a wall. */
+    private static Obstacle newWall(Entity[][] map, int x, int y) {
         Obstacle obstacle = new Obstacle();
         obstacle.setPOS(new Position(x, y));
+        map[x][y] = obstacle;
         return obstacle;
     }
     
-    /** Function to return a player. */
-    private static Player newPlayer(Position position) {
+    /** Function to place a player. */
+    private static Player newPlayer(Entity[][] map, Position position) {
         Player player = Player.randomPlayer();
         player.setPOS(position);
+        map[position.x][position.y] = player;
         return player;
     }
     
-    /** Function to return an enemy. */
-    private static Enemy newEnemy(Position position, int Floor) {
-        Enemy enemy = Enemy.randomEnemy(Floor);
+    /** Function to place an enemy. */
+    private static Enemy newEnemy(Entity[][] map, Position position, int floor) {
+        Enemy enemy = Enemy.randomEnemy(floor);
         enemy.setPOS(position);
+        map[position.x][position.y] = enemy;
         return enemy;
     }
     
