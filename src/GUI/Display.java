@@ -5,22 +5,21 @@ import Model.*;
 import javafx.animation.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-
 import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class for displaying Maps as JavaFX.
@@ -294,9 +293,9 @@ public class Display {
 	 * @param turn The Turn to animate.
 	 * @param handler The handler to run on completion.
 	 */
-	public void animateTurn(Turn turn, Consumer<Boolean> handler) {
+	public void animateTurn(Turn turn, EventHandler<ActionEvent> handler) {
 		Animation anim = animationForTurn(turn);
-		anim.setOnFinished(action -> handler.accept(true));
+		anim.setOnFinished(handler);
 		anim.play();
 	}
 	

@@ -4,9 +4,11 @@ import java.util.*;
 
 public class Enemy extends Entity {
 	private String type;
-	public Enemy(double HP, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP, String type) {
+	public Enemy(double HP, double ATK, double DEF, int SPD, Position POS, int LVL, String type) {
 		super(HP, ATK, DEF, SPD, POS, LVL);
+		this.type = type;
 	}
+	
 	/** Takes the floor level of the dungeon and generates a random enemy based on it **/
 	public static Enemy randomEnemy(int Floor) {
 		int multiplier = Floor;
@@ -15,7 +17,7 @@ public class Enemy extends Entity {
 		double ATK = (rand.nextInt(9) + 1) * multiplier;
 		int SPD = rand.nextInt(3) + 1;
 		double DEF = (rand.nextInt(9) + 1) * multiplier;
-		Enemy enemy = new Enemy(HP, ATK, DEF, SPD, null, 1, 0, "Placeholder");
+		Enemy enemy = new Enemy(HP, ATK, DEF, SPD, null, 1, "Placeholder");
 		return enemy;
 	}
 	
@@ -44,7 +46,7 @@ public class Enemy extends Entity {
 		// path towards closest position to player
 		else {
 			return Pathfinding.shortestPath(map, getPOS(), toAttack).stream()
-					.filter(moves::contains).reduce((pos1, pos2) -> pos2).orElse(getPOS());
+					.reduce((pos1, pos2) -> moves.contains(pos2) ? pos2 : pos1).orElse(getPOS());
 		}
 	}
 	
@@ -59,7 +61,7 @@ public class Enemy extends Entity {
 	
 	@Override
 	public Entity copy() {
-		Enemy Enemy = new Enemy(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), 0, "Placeholder");
+		Enemy Enemy = new Enemy(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), "Placeholder");
 		Enemy.setHP(getHP());
 		return Enemy;
 	}

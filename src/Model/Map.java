@@ -359,9 +359,9 @@ public final class Map implements Pathfinding.Delegate {
 		// move to stairs
 		else if (entity2 instanceof Stairs) {
 			// refresh map
-			nextFloor();
 			turn.end = p2;
 			turn.pathfind(this);
+			nextFloor();
 			return turn;
 		}
 		// destination is an enemy

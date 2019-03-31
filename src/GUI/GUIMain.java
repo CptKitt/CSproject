@@ -2,9 +2,6 @@ package GUI;
 
 import Model.*;
 
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -12,6 +9,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * JavaFX application representing the GUI interface for the game.
