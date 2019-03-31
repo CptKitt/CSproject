@@ -28,7 +28,7 @@ public class Player extends Entity {
 		this.STM = STM;
 	}
 	/** Return stamina of player as an integer. **/
-	public int getSETM() {
+	public int getSTM() {
 		return STM;
 	}
 	/** Set EXP to an amount, given as a double. **/
@@ -74,6 +74,7 @@ public class Player extends Entity {
 	public Entity copy() {
 		Player Player = new Player(getHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), EXP, LVLlimit, STM, "Placeholder");
 		Player.setmaxHP(getHP());
+		Player.setSTM(getSTM());
 		return Player;
 	}
 }
