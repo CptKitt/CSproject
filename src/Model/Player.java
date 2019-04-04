@@ -47,16 +47,14 @@ public class Player extends Entity {
 		return STM;
 	}
 	/** 
-	 * Set EXP to an amount, given as a double. 
-	 */
-	public void setEXP(double EXP) {
-		this.EXP = EXP;
-	}
-	/** 
-	 * Add EXP to the EXP pool of the player.
+	 * Add EXP to the EXP pool of the player, and levels them up
+	 * if their EXP surpasses their EXP limit for their current level.
 	 */
 	public void addEXP(double EXP) {
 		this.EXP += EXP;
+		if(this.EXP >= this.LVLlimit) {
+			this.LVLup(this.EXP);
+		}
 	}
 	/** 
 	 * Level up character by 1
@@ -75,7 +73,6 @@ public class Player extends Entity {
 	/**
 	 * Attack an enemy, dealing damage to HP depending on the player's 
 	 * attack stat and the enemy's defense stat, and add EXP if the enemy is killed.
-	 * Also determine if the player will level up based on their EXP. 
 	 */
 	public void attack(Enemy e) {
 		Random rand = new Random();
@@ -86,9 +83,6 @@ public class Player extends Entity {
 			int EXPgained = rand.nextInt(21) + 30;
 			this.addEXP(EXPgained);
 			Map.logMessage("Player gained " + EXPgained + " experience points!");
-		}
-		if(this.EXP >= this.LVLlimit) {
-			this.LVLup(this.EXP);
 		}
 		Map.logMessage("Dealt " + (int) damage + " damage!");
 	
