@@ -13,7 +13,8 @@ public class Enemy extends Entity {
 	}
 	/** Takes the floor level of the dungeon and generates a random enemy based on it **/
 	public static Enemy randomEnemy(int Floor) {
-		int multiplier = Floor;
+		double multiplier = Math.pow(2, Floor/2.5);
+		multiplier *= (Math.random()/5) + 1;
 		Random rand = new Random();
 		double HP = (rand.nextInt(9) + 3) * multiplier;
 		double ATK = (rand.nextInt(9) + 1) * multiplier;

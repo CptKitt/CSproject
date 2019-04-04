@@ -56,16 +56,18 @@ public class Player extends Entity {
 	 * attack stat and the enemy's defense stat, and add EXP if the enemy is killed.
 	 * Also determine if the player will level up based on their EXP. **/
 	public void attack(Enemy e) {
+		Random rand = new Random();
 		double ATK = this.getATK();
 		double damage = (ATK * 10)/(e.getDEF() + 5);
 		e.setHP(e.getHP() - damage);
 		if((e.getHP() - damage) < 0) {
-			this.addEXP(e.getLVL() * 50);
+			int EXPgained = rand.nextInt(21) + 30;
+			this.addEXP(EXPgained);
+			Map.logMessage("Player gained " + EXPgained + " experience points!");
 		}
-		if(this.EXP > this.LVLlimit) {
+		if(this.EXP >= this.LVLlimit) {
 			this.LVLup(this.EXP);
 		}
-		
 		Map.logMessage("Dealt " + (int) damage + " damage!");
 	
 	}
