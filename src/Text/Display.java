@@ -6,11 +6,18 @@ import javafx.geometry.Pos;
 import java.util.Set;
 
 /**
- *
- */
+  * Display class is used to display the text-based version of Group 9's project.
+  * Is implemented within the TextMain class.
+  * Contains methods: printMap(map:Map, highlight:Set<Position>):void.
+  */
 public class Display {
 
-
+    /**
+     * printMap() method takes a Map, and Set<Position> objects that are used to print
+     * the map/floor level layout, characters, and enemies to the terminal when called.
+     * Parameters: map:Map, highlight:Set<Position>.
+     * Returns:nothing.
+     */
     public void printMap(Map map, Set<Position> highlight) {
 
         Entity[][] grid = map.getGrid();
@@ -79,9 +86,7 @@ public class Display {
 
             }
         }
-		//Starts a new row to the Display
+		//Starts a new row to seperate the Display from the Input
 		System.out.println();
     }
-	//Prints Floor number and type
-	//System.out.println("Floor: " + map.getFloor() + " " + map.getType());
 }

@@ -44,9 +44,6 @@ public final class Map implements Pathfinding.Delegate {
 	/** The current floor number. Affects map generation. */
 	private int floor;
 	
-	// TODO: remove temporary set in favor of Entity.stamina
-	private Set<Position> moved = new HashSet<>();
-	
 	// Static variables
 	
 	/**
@@ -125,44 +122,29 @@ public final class Map implements Pathfinding.Delegate {
 	
 	/** @return A copy of the entities represented by this Map. */
 	public Entity[][] getGrid() {
-		Entity[][] copy = new Entity[getWidth()][getHeight()];
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				if (entities[x][y] != null) {
-					copy[x][y] = entities[x][y].copy();
-				}
-			}
-		}
-		return copy;
+		return Arrays.stream(entities).map(arr ->
+				Arrays.stream(arr).map(entity -> entity == null ? null : entity.copy())
+						.toArray(Entity[]::new))
+				.toArray(Entity[][]::new);
 	}
 	
 	/** @return A copy of the visibility of the Map. */
 	public double[][] getVisibility() {
-		double[][] copy = new double[getWidth()][getHeight()];
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				copy[x][y] = visibility[x][y];
-			}
-		}
-		return copy;
+		return Arrays.stream(visibility)
+				.map(arr -> Arrays.copyOf(arr, getHeight()))
+				.toArray(double[][]::new);
 	}
 	
 	/** @return A copy of the Players on the Map. */
 	public List<Player> getPlayers() {
-		List<Player> copy = new ArrayList<>();
-		for (Player player : players) {
-			copy.add((Player) player.copy());
-		}
-		return copy;
+		return players.stream().map(player -> (Player) player.copy())
+				.collect(Collectors.toList());
 	}
 	
 	/** @return A copy of the Enemies on the Map. */
 	public List<Enemy> getEnemies() {
-		List<Enemy> copy = new ArrayList<>();
-		for (Enemy enemy : enemies) {
-			copy.add((Enemy) enemy.copy());
-		}
-		return copy;
+		return enemies.stream().map(enemy -> (Enemy) enemy.copy())
+				.collect(Collectors.toList());
 	}
 	
 	/** @return The floor number. */
@@ -193,20 +175,8 @@ public final class Map implements Pathfinding.Delegate {
 	
 	/** Updates visibility for the whole Map. */
 	private void updateVisibility() {
-		List<Position> toUpdate = new ArrayList<>();
-		
-		// look for players
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				Entity entity = entities[x][y];
-				if (entity instanceof Player) {
-					toUpdate.add(new Position(x, y));
-				}
-			}
-		}
-		
 		// go through each player position
-		for (Position pos: toUpdate) {
+		players.stream().map(Player::getPOS).forEach(pos -> {
 			for (Position pos2 : Pathfinding.visibility(this, pos, 7)) {
 				// check OOB
 				if (!positionOnMap(pos2)) {
@@ -219,34 +189,34 @@ public final class Map implements Pathfinding.Delegate {
 					visibility[pos2.x][pos2.y] = Math.min(1, opacity);
 				}
 			}
-		}
+		});
 	}
 	
 	/** Increments the floor number and recreates the Map. */
 	public void nextFloor() {
 		floor += 1;
+		
+		// reset variables
 		visibility = new double[getWidth()][getHeight()];
-		moved.clear();
+		players.forEach(player -> player.setSTM(player.getSPD()));
 		
 		// different types based on floor
-		if (floor <= 10) {
+		if (floor <= 3) {
 			type = Type.TOWER;
 			entities = MapGenerator.generateCircle(getWidth(), getHeight());
 		}
-		else if (floor <= 20) {
+		else if (floor <= 6) {
 			type = Type.CAVE;
 			entities = MapGenerator.generateCave(getWidth(), getHeight());
 		}
-		else if (floor <= 30) {
+		else if (floor <= 9) {
 			type = Type.DUNGEON;
 			entities = MapGenerator.generateDungeon(getWidth(), getHeight());
 		}
 		else {
-			entities = new Entity[getWidth()][getHeight()];
+			type = Type.DUNGEON;
+			entities = MapGenerator.generateBossRoom(getWidth(), getHeight());
 		}
-		
-		// TODO: remove
-		entities = MapGenerator.randomMap(getWidth(), getHeight());
 		
 		MapGenerator.placePlayers(entities, players);
 		stairs = MapGenerator.placeStairs(entities, players);
@@ -266,17 +236,15 @@ public final class Map implements Pathfinding.Delegate {
 			return new HashSet<>();
 		}
 		
-		// TODO: replace with stamina checks
-		if (moved.contains(p)) { // already moved
+		// get moves and range
+		int range = ((Player) entities[p.x][p.y]).getSTM();
+		if (range == 0) {
 			return new HashSet<>();
 		}
-		
-		// get moves and range
-		Set<Position> moves = possibleMovesForEntity(p);
-		int range = entities[p.x][p.y].getSPD();
+		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add enemy attacks
-		moves.addAll(enemies.stream().map(enemy -> enemy.getPOS()).filter(pos ->
+		moves.addAll(enemies.stream().map(Enemy::getPOS).filter(pos ->
 				// enemy in range of attack and open square next to the position
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
@@ -305,11 +273,11 @@ public final class Map implements Pathfinding.Delegate {
 		}
 		
 		// get moves and range
-		Set<Position> moves = possibleMovesForEntity(p);
 		int range = entities[p.x][p.y].getSPD();
+		Set<Position> moves = possibleMovesForEntity(p, range);
 		
 		// add player attacks
-		moves.addAll(players.stream().map(player -> player.getPOS()).filter(pos ->
+		moves.addAll(players.stream().map(Player::getPOS).filter(pos ->
 				Pathfinding.shortestPath(this, p, pos).size() < range
 						&& moves.stream().anyMatch(pos2 -> pos2.distanceTo(pos) == 1)
 		).collect(Collectors.toList()));
@@ -362,8 +330,10 @@ public final class Map implements Pathfinding.Delegate {
 		// move to stairs
 		else if (entity2 instanceof Stairs) {
 			// refresh map
-			nextFloor();
 			turn.end = p2;
+			turn.pathfind(this);
+			nextFloor();
+			return turn;
 		}
 		// destination is an enemy
 		else if (entity2 instanceof Enemy) {
@@ -385,7 +355,9 @@ public final class Map implements Pathfinding.Delegate {
 			// ask player to attack enemy
 			Enemy enemy = (Enemy) entity2;
 			turn.attackPos = enemy.getPOS();
+			turn.damage = (int) Math.ceil(enemy.getHP());
 			player.attack(enemy);
+			turn.damage -= (int) Math.ceil(enemy.getHP());
 			
 			// killed enemy, remove
 			if (enemy.getHP() <= 0) {
@@ -401,9 +373,17 @@ public final class Map implements Pathfinding.Delegate {
 		// action successfully completed, finish
 		updateVisibility();
 		
-		moved.add(player.getPOS());
 		turn.end = player.getPOS();
 		turn.pathfind(this);
+		
+		// update player stamina
+		if (turn.attackPos != null) {
+			player.setSTM(0);
+		}
+		else {
+			player.setSTM(player.getSTM() - turn.path.size() - 1);
+		}
+		
 		return turn;
 	}
 	
@@ -412,7 +392,8 @@ public final class Map implements Pathfinding.Delegate {
 	 * @return A List of actions that were taken by enemies.
 	 */
 	public List<Turn> endTurn() {
-		moved.clear();
+		// reset player stamina
+		players.forEach(player -> player.setSTM(player.getSPD()));
 		
 		return processEnemyMoves();
 	}
@@ -423,13 +404,12 @@ public final class Map implements Pathfinding.Delegate {
 	 * @param p The Position of the Entity.
 	 * @return A Set of Positions that the Entity can move to.
 	 */
-	private Set<Position> possibleMovesForEntity(Position p) {
-		if (entities[p.x][p.y] == null) {
+	private Set<Position> possibleMovesForEntity(Position p, int range) {
+		if (entities[p.x][p.y] == null || range <= 0) {
 			return new HashSet<>();
 		}
 		
-		return Pathfinding.movementForPosition(
-				this, p, entities[p.x][p.y].getSPD());
+		return Pathfinding.movementForPosition(this, p, range);
 	}
 	
 	/**
@@ -484,14 +464,15 @@ public final class Map implements Pathfinding.Delegate {
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
 				turn.attackPos = player.getPOS();
+				turn.damage = (int) Math.ceil(player.getHP());
 				enemy.attack(player);
+				turn.damage -= (int) Math.ceil(player.getHP());
 				
 				// game over (?)
 				if (player.getHP() <= 0) {
 					players.remove(player);
 					entities[p2.x][p2.y] = null;
 					logMessage("A character has died.");
-					// TODO: do something after game over
 				}
 			}
 			else {

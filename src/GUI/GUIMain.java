@@ -1,16 +1,18 @@
 package GUI;
 
 import Model.*;
-import java.util.Set;
-import java.util.HashSet;
+
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * JavaFX application representing the GUI interface for the game.
@@ -23,9 +25,12 @@ public class GUIMain extends Application {
 	private Canvas canvas;
 	private Group infoGroup;
 
-	private Position hoverPosition;
+	private Position hoverPosition = Position.ORIGIN;
 	private Position selectedPosition;
+	private int selectHint = 0;
 	private Set<Position> possibleMoves;
+	
+	private boolean animating = false;
 
 	/** The width of the application. */
 	public static final double WIDTH = 30 * Display.size + 300;
@@ -34,31 +39,22 @@ public class GUIMain extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// create i/o
-		display = new Display();
-
 		// javafx setup
 		canvas = new Canvas(WIDTH, HEIGHT);
 		infoGroup = new Group();
 		infoGroup.setTranslateX(30 * 32);
 		root = new Group(canvas, infoGroup);
 		scene = new Scene(root, WIDTH, HEIGHT);
+		
+		// create i/o
+		display = new Display(root, 30, 20);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 		scene.addEventFilter(MouseEvent.MOUSE_MOVED, this::sceneHovered);
 
 		// temporary reset button
-		scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-			if (event.getCode() == KeyCode.SPACE) {
-				System.out.println("enemy turns: " + map.endTurn());
-				display.drawMapOnScene(
-						map, canvas.getGraphicsContext2D(), possibleMoves);
-			}
-			else if (event.getCode() == KeyCode.BACK_SPACE) {
-				reset();
-			}
-		});
+		scene.addEventFilter(KeyEvent.KEY_PRESSED, this::keyboardPress);
 
 		// create map and vars
 		reset();
@@ -83,21 +79,84 @@ public class GUIMain extends Application {
 		possibleMoves = new HashSet<>();
 
 		// display once
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
+		redrawMap();
 	}
-
+	
+	/**
+	 * Event handling function for key presses in the scene.
+	 * @param event The KeyEvent to process.
+	 */
+	private void keyboardPress(KeyEvent event) {
+		if (animating) return;
+		
+		Position toMove = null;
+		switch (event.getCode()) {
+			case SPACE: // end player turn
+				endTurn();
+				break;
+				
+			case BACK_SPACE: // debug
+				reset();
+				break;
+				
+			case TAB: // select next player
+				List<Player> players = map.getPlayers();
+				for (int last = ++selectHint + players.size(); selectHint < last; selectHint++) {
+					Player player = players.get(selectHint % players.size());
+					if (player.getSTM() > 0) {
+						selectedPosition = player.getPOS();
+						redrawMap();
+						break;
+					}
+				}
+				break;
+				
+			case A: case LEFT: // movement
+				if (selectedPosition != null) {
+					toMove = selectedPosition.moved(0, -1);
+				}
+				break;
+			case S: case DOWN:
+				if (selectedPosition != null) {
+					toMove = selectedPosition.moved(1, 0);
+				}
+				break;
+			case D: case RIGHT:
+				if (selectedPosition != null) {
+					toMove = selectedPosition.moved(0, 1);
+				}
+				break;
+			case W: case UP:
+				if (selectedPosition != null) {
+					toMove = selectedPosition.moved(-1, 0);
+				}
+				break;
+		}
+		
+		// movement key pressed
+		if (toMove != null) {
+			Position start = selectedPosition;
+			selectedPosition = toMove;
+			if (!playerTurn(start, toMove)) {
+				selectedPosition = start;
+			}
+		}
+	}
+	
 	/**
 	 * Event handling function for clicks in the scene.
 	 * @param event The MouseEvent to process.
 	 */
 	private void sceneClicked(MouseEvent event) {
+		if (animating) return;
+		
 		// convert coordinates to account for drawing
 		int x = (int) (event.getSceneX() / Display.size);
 		int y = (int) (event.getSceneY() / Display.size);
 
 		// click in sidebar
-		if (x > 30) {
-			System.out.println("enemy turns: " + map.endTurn());
+		if (x >= 30) {
+			endTurn();
 		}
 		// map click
 		else {
@@ -110,27 +169,91 @@ public class GUIMain extends Application {
 
 			// first click
 			if (selectedPosition == null) {
-				Set<Position> moves = map.possibleMovesForCharacter(pos);
-
-				// select character if possible moves exist
-				if (!moves.isEmpty()) {
-					selectedPosition = pos;
-					possibleMoves = moves;
-				}
+				selectedPosition = pos;
+				redrawMap();
 			}
 			// second click: try performing action
 			else {
-				// TODO: implement end turn event checks
-				Turn playerTurn = map.processAction(selectedPosition, pos);
-				System.out.println("player turn: " + playerTurn);
-
-				selectedPosition = null;
-				possibleMoves.clear();
+				if (map.getPlayers().stream()
+						.anyMatch(player -> player.getPOS().equals(pos))) {
+					selectedPosition = pos.equals(selectedPosition) ? null : pos;
+					redrawMap();
+				}
+				else {
+					Position start = selectedPosition;
+					selectedPosition = pos;
+					if (!playerTurn(start, pos)) {
+						selectedPosition = null;
+						redrawMap();
+					}
+				}
 			}
 		}
-
-		// update display
-		display.drawMapOnScene(map, canvas.getGraphicsContext2D(), possibleMoves);
+	}
+	
+	/** Returns true if the player turn is completed. */
+	private boolean playerTurn(Position start, Position end) {
+		if (start == null || end == null) {
+			return false;
+		}
+		
+		boolean nextFloor = map.getGrid()[end.x][end.y] instanceof Stairs;
+		
+		Turn playerTurn = map.processAction(start, end);
+		if (playerTurn != null) {
+			animating = true;
+			
+			display.animateTurn(playerTurn, event -> {
+				// special case: fade to black
+				if (nextFloor) {
+					display.fadeToBlack(event2 -> {
+						redrawMap();
+						animating = false;
+					});
+				}
+				else {
+					redrawMap();
+					animating = false;
+				}
+			});
+		}
+		
+		return playerTurn != null;
+	}
+	
+	/** Ends the player turn and animates enemy turns. */
+	private void endTurn() {
+		selectedPosition = null;
+		redrawMap();
+		
+		animating = true;
+		display.animateTurns(map.endTurn(), e -> {
+			animating = false;
+			redrawMap();
+		});
+	}
+	
+	/** Runs possible move calculations and asks Display to redraw the map. */
+	private void redrawMap() {
+		// position selected
+		if (selectedPosition != null) {
+			possibleMoves = map.possibleMovesForCharacter(selectedPosition);
+			
+			// no moves available, deselect position
+			if (possibleMoves.isEmpty()) {
+				selectedPosition = null;
+				display.drawInfoOnScene(map, infoGroup, null);
+			}
+			else {
+				Entity selected = map.getGrid()[selectedPosition.x][selectedPosition.y];
+				display.drawInfoOnScene(map, infoGroup, selected);
+			}
+		}
+		else {
+			possibleMoves.clear();
+		}
+		
+		display.drawMapOnScene(map, possibleMoves);
 	}
 
 	/**
@@ -149,8 +272,7 @@ public class GUIMain extends Application {
 		}
 
 		// no significant movement
-		if ((pos == null && hoverPosition == null)
-				|| (pos != null && pos.equals(hoverPosition))) {
+		if (pos != null && pos.equals(hoverPosition)) {
 			return;
 		}
 		hoverPosition = pos;
@@ -164,11 +286,7 @@ public class GUIMain extends Application {
 		else {
 			entity = map.getGrid()[pos.x][pos.y];
 		}
-
-		// TODO: send to Display
-		if (entity != null) {
-			System.out.println("hover pos " + pos + ": " + entity);
-		}
+		
 		display.drawInfoOnScene(map, infoGroup, entity);
 	}
 }

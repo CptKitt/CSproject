@@ -1,16 +1,14 @@
 package Model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class Enemy extends Entity {
 	private String type;
-	public Enemy(double HP, double ATK, double DEF, int SPD, Position POS, int LVL, double EXP, String type) {
+	public Enemy(double HP, double ATK, double DEF, int SPD, Position POS, int LVL, String type) {
 		super(HP, ATK, DEF, SPD, POS, LVL);
+		this.type = type;
 	}
+	
 	/** Takes the floor level of the dungeon and generates a random enemy based on it **/
 	public static Enemy randomEnemy(int Floor) {
 		double multiplier = Math.pow(2, Floor/2.5);
@@ -20,39 +18,37 @@ public class Enemy extends Entity {
 		double ATK = (rand.nextInt(9) + 1) * multiplier;
 		int SPD = rand.nextInt(3) + 1;
 		double DEF = (rand.nextInt(9) + 1) * multiplier;
-		Enemy enemy = new Enemy(HP, ATK, DEF, SPD, null, 1, 0, "Placeholder");
+		Enemy enemy = new Enemy(HP, ATK, DEF, SPD, null, 1, "Placeholder");
 		return enemy;
 	}
 	
 	/** Takes a map, and returns a position for the enemy to move to. **/
 	public Position makeMove(Map map) {
+		// retrieve own moves from map
 		Set<Position> moves = map.possibleMovesForEnemy(getPOS());
 		if (moves.isEmpty()) {
 			return getPOS();
 		}
 		
-		// check through players in map
-		for (Player player : map.getPlayers()) {
-			// player in range and in line of sight
-			if (Pathfinding.shortestPath(map, getPOS(), player.getPOS()).size() < 6
-					&& Pathfinding.lineOfSight(map, getPOS(), player.getPOS())) {
-				// attack if in range
-				if (moves.contains(player.getPOS())) {
-					return player.getPOS();
-				}
-				// path towards player
-				List<Position> path = Pathfinding.shortestPath(map, getPOS(), player.getPOS());
-				Collections.reverse(path);
-				for (Position pos : path) {
-					if (moves.contains(pos)) {
-						return pos;
-					}
-				}
-			}
-		}
+		// find closest visible player in map
+		Position toAttack = map.getPlayers().stream().map(Entity::getPOS)
+				.filter(pos -> Pathfinding.lineOfSight(map, pos, getPOS()) && pos.distanceTo(getPOS()) < 7)
+				.min(Comparator.comparingInt(getPOS()::distanceTo))
+				.orElse(null);
 		
 		// no player found: return random move in range
-		return new ArrayList<>(moves).get(new Random().nextInt(moves.size()));
+		if (toAttack == null) {
+			return new ArrayList<>(moves).get(new Random().nextInt(moves.size()));
+		}
+		// attack player in range
+		else if (moves.contains(toAttack)) {
+			return toAttack;
+		}
+		// path towards closest position to player
+		else {
+			return Pathfinding.shortestPath(map, getPOS(), toAttack).stream()
+					.reduce((pos1, pos2) -> moves.contains(pos2) ? pos2 : pos1).orElse(getPOS());
+		}
 	}
 	
 	/** Attacks a player, and subtracts HP from them based on the Enemy's attack and the Player's defense. **/
@@ -66,7 +62,7 @@ public class Enemy extends Entity {
 	
 	@Override
 	public Entity copy() {
-		Enemy Enemy = new Enemy(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), 0, "Placeholder");
+		Enemy Enemy = new Enemy(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), "Placeholder");
 		Enemy.setHP(getHP());
 		return Enemy;
 	}
