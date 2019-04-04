@@ -63,7 +63,7 @@ public class Player extends Entity {
 	 */
 	public void LVLup(double EXP) {
 			this.setLVL(this.getLVL() + 1);
-			this.setHP((this.getHP()/ (this.getLVL()-1)) * this.getLVL());
+			this.setHP((this.getmaxHP()/ (this.getLVL()-1)) * this.getLVL());
 			this.setATK((this.getATK()/ (this.getLVL() -1)) * this.getLVL());
 			this.setDEF((this.getDEF()/ (this.getLVL() - 1)) * this.getLVL());
 			this.setmaxHP((this.getHP()/ (this.getLVL()-1)) * this.getLVL());
