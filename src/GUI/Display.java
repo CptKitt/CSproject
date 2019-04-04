@@ -25,11 +25,14 @@ import java.util.Set;
  * Class for displaying Maps as JavaFX.
  */
 public class Display {
-	public static final double size = 32d;
+	/** The length of all displayed Images. */
+	public static double size = 32d;
 	
 	//environment (walls, floors, et cetera)
-	private static Image floor, wall, space, highlight;
-	private static Image shade, upstairs, downstairs;
+	private static Image tower_floor, dungeon_floor, cave_floor,
+			wall, cave_wall,
+			space, highlight, shade, upstairs,
+			downstairs_dungeon, downstairs_cave;
 	
 	//entities (players, enemies)
 	private static Image red_slime, orange_slime, yellow_slime;
@@ -41,14 +44,10 @@ public class Display {
 	
 	private static Font pixelFont;
 	
-	static {
-		loadImages();
-	}
-	
 	// screen objects
-	Group root;
-	ImageView[][] floors, entities, shades;
-	Rectangle[][] highlights, covers;
+	private Group root;
+	private ImageView[][] floors, entities, shades;
+	private Rectangle[][] highlights, covers;
 	
 	/**
 	 * Initializes a new Display object.
@@ -68,38 +67,43 @@ public class Display {
 		Color highlightColor = Color.valueOf("#02ff06")
 				.deriveColor(0, 1, 1, 0.5);
 		
-		// initialize ImageViews
+		// initialize views
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				floors[x][y] = new ImageView(floor);
-				floors[x][y].setTranslateX(x * size);
-				floors[x][y].setTranslateY(y * size);
-				entities[x][y] = new ImageView();
-				entities[x][y].setTranslateX(x * size);
-				entities[x][y].setTranslateY(y * size);
-				highlights[x][y] = new Rectangle(size, size, highlightColor);
-				highlights[x][y].setTranslateX(x * size);
-				highlights[x][y].setTranslateY(y * size);
-				shades[x][y] = new ImageView(shade);
-				shades[x][y].setTranslateX(x * size);
-				shades[x][y].setTranslateY(y * size);
-				covers[x][y] = new Rectangle(size, size, Color.BLACK);
-				covers[x][y].setTranslateX(x * size);
-				covers[x][y].setTranslateY(y * size);
+				floors[x][y] = defaultImageView(dungeon_floor, x, y);
+				entities[x][y] = defaultImageView(null, x, y);
+				highlights[x][y] = defaultRectangle(highlightColor, x, y);
+				shades[x][y] = defaultImageView(shade, x, y);
+				covers[x][y] = defaultRectangle(Color.BLACK, x, y);
 			}
 		}
 		
 		// layer views
-		for (int x = 0; x < width; x++)
-			root.getChildren().addAll(floors[x]);
-		for (int x = 0; x < width; x++)
-			root.getChildren().addAll(highlights[x]);
-		for (int x = 0; x < width; x++)
-			root.getChildren().addAll(entities[x]);
-		for (int x = 0; x < width; x++)
-			root.getChildren().addAll(shades[x]);
-		for (int x = 0; x < width; x++)
-			root.getChildren().addAll(covers[x]);
+		for (Node[][] nodes : new Node[][][] {
+				floors, highlights, entities, shades, covers
+		}) {
+			for (Node[] children : nodes) {
+				root.getChildren().addAll(children);
+			}
+		}
+	}
+	
+	/** Creates a new ImageView with the specified image. */
+	private ImageView defaultImageView(Image image, int x, int y) {
+		ImageView iv = new ImageView(image);
+		iv.setTranslateX(x * size);
+		iv.setTranslateY(y * size);
+		iv.setFitWidth(size);
+		iv.setFitHeight(size);
+		return iv;
+	}
+	
+	/** Creates a new Rectangle of the specified color. */
+	private Rectangle defaultRectangle(Color color, int x, int y) {
+		Rectangle rect = new Rectangle(size, size, color);
+		rect.setTranslateX(x * size);
+		rect.setTranslateY(y * size);
+		return rect;
 	}
 	
 	/**
@@ -117,9 +121,19 @@ public class Display {
 				Image newImage = null;
 				
 				// reset
-				floors[x][y].setImage(floor);
 				if (!(e instanceof Player)) {
 					entities[x][y].setOpacity(1);
+				}
+				
+				// update floors
+				if (m.getType() == Map.Type.CAVE) {
+					floors[x][y].setImage(cave_floor);
+				}
+				else if (m.getType() == Map.Type.TOWER) {
+					floors[x][y].setImage(tower_floor);
+				}
+				else {
+					floors[x][y].setImage(dungeon_floor);
 				}
 				
 				// process entity
@@ -128,11 +142,21 @@ public class Display {
 						newImage = space;
 					}
 					else {
-						newImage = wall;
+						if (m.getType() == Map.Type.CAVE) {
+							newImage = cave_wall;
+						}
+						else {
+							newImage = wall;
+						}
 					}
 				}
 				else if (e instanceof Stairs) {
-					floors[x][y].setImage(downstairs);
+					if (m.getType() == Map.Type.CAVE) {
+						floors[x][y].setImage(downstairs_cave);
+					}
+					else {
+						floors[x][y].setImage(downstairs_dungeon);
+					}
 				}
 				else if (e instanceof Enemy) {
 					newImage = green_slime;
@@ -140,7 +164,8 @@ public class Display {
 				else if (e instanceof Player) {
 					newImage = hero;
 					// fade out players with no moves left
-					fadeNodeOpacity(entities[x][y], ((Player) e).getSTM() <= 0 ? 0.5 : 1, 0.2);
+					double opacity = ((Player) e).getSTM() <= 0 ? 0.5 : 1;
+					fadeNodeOpacity(entities[x][y], opacity, 0.2);
 				}
 				entities[x][y].setImage(newImage);
 				
@@ -203,6 +228,7 @@ public class Display {
 			positions.add(turn.end);
 			
 			// start position
+			
 			Path path = new Path(new MoveTo(
 					start.x * size + size / 2,
 					start.y * size + size / 2));
@@ -315,7 +341,8 @@ public class Display {
 		for (int i = 0; i < anims.length; i++) {
 			SequentialTransition st = new SequentialTransition(
 					new PauseTransition(Duration.seconds(i * 0.1)),
-					anims[i]
+					anims[i],
+					new PauseTransition(Duration.seconds(0.1))
 			);
 			// add handler to final animation
 			if (i == anims.length - 1) {
@@ -361,23 +388,23 @@ public class Display {
 			spd = new Label();
 		}
 		if (ent instanceof Obstacle) {
-			picture = new Image("GUI/assets/environment/wall2.png",size*2,size*2,true,false);
+			picture = wall;
 			name = new Label("Wall");
 		}
 		else if (ent instanceof Stairs) {
-			picture = new Image("GUI/assets/environment/stairs_up.png",size*2,size*2,true,false);
+			picture = upstairs;
 			name = new Label("Portal");
 		}
 		else if (ent instanceof Enemy) {
-			picture =  new Image("GUI/assets/slimes/green_slime.png",size*2,size*2,true,false);
+			picture = green_slime;
 			name = new Label("Green Slime");
 		}
 		else if (ent instanceof Player) {
-			picture = new Image("GUI/assets/player1.png",size*2,size*2,true,false);
+			picture = hero;
 			name = new Label("Generic Shifty-eyed Hero");
 		}
 		else {
-			picture = new Image("GUI/assets/environment/wall3.png",size*2,size*2,true,false);
+			picture = null;
 			name = new Label();
 		}
 
@@ -400,18 +427,22 @@ public class Display {
 	}
 	
 	/** Attempts to load GUI images. */
-	private static void loadImages() {
+	public static void loadImages() {
 		String env = "environment/";
 		String over = "overlays/";
 		String slime = "slimes/";
 		
-		floor = asset(env + "tile1.png");
+		tower_floor = asset(env + "tile3.png");
+		dungeon_floor = asset(env + "tile1.png");
+		cave_floor = asset(env + "tile2.png");
 		wall = asset(env + "wall2.png");
+		cave_wall = asset(env + "wall1.png");
 		space = asset(env + "wall3.png");
 		highlight = asset(over + "move_highlight.png");
 		shade = asset(over + "night_overlay.png");
 		upstairs = asset(env + "stairs_up.png");
-		downstairs = asset(env + "stairs_down.png");
+		downstairs_dungeon = asset(env + "stairs_down_dungeon.png");
+		downstairs_cave = asset(env + "stairs_down_cave.png");
 		
 		red_slime = asset(slime + "red_slime.png");
 		orange_slime = asset(slime + "orange_slime.png");
@@ -441,7 +472,7 @@ public class Display {
 	private static Image asset(String name) {
 		String path = "GUI/assets/" + name;
 		try {
-			return new Image(path, size, size, true, false);
+			return new Image(path, size * 2, size * 2, true, false);
 		}
 		catch (IllegalArgumentException iae) {
 			System.out.println("Missing image at URL: " + path);

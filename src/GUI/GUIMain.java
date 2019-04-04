@@ -5,9 +5,10 @@ import Model.*;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.HashSet;
@@ -18,42 +19,54 @@ import java.util.Set;
  * JavaFX application representing the GUI interface for the game.
  */
 public class GUIMain extends Application {
+	/** Map representing the Model of the application. */
 	private Map map;
+	/** I/O object responsible for displaying the map. */
 	private Display display;
-	private Scene scene;
-	private Group root;
-	private Canvas canvas;
+	/** Group in which the Display draws the sidebar. */
 	private Group infoGroup;
 
+	/** The Map-coordinate Position over which the user is hovering. */
 	private Position hoverPosition = Position.ORIGIN;
-	private Position selectedPosition;
-	private int selectHint = 0;
+	/** The Position that the user has selected. May be null. */
+	private Position selected;
+	/** Positions that the selected Player can move to. May be null. */
 	private Set<Position> possibleMoves;
 	
+	/** A private hint to inform swapping between Players. */
+	private int selectHint = 0;
+	/** Flag representing whether the Display is animating or not. */
 	private boolean animating = false;
+	
+	/** The grid width of the Map. */
+	private static final int MAP_WIDTH = 30;
+	/** The grid height of the Map. */
+	private static final int MAP_HEIGHT = 20;
 
 	/** The width of the application. */
-	public static final double WIDTH = 30 * Display.size + 300;
+	public static final double WIDTH = MAP_WIDTH * Display.size + 300;
 	/** The height of the application. */
-	public static final double HEIGHT = 20 * Display.size;
+	public static final double HEIGHT = MAP_HEIGHT * Display.size;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+	    double yScale = Screen.getPrimary().getVisualBounds()
+                .getHeight() / (MAP_HEIGHT * 16);
+	    Display.size = 16 * (int) yScale;
+	    
 		// javafx setup
-		canvas = new Canvas(WIDTH, HEIGHT);
 		infoGroup = new Group();
-		infoGroup.setTranslateX(30 * 32);
-		root = new Group(canvas, infoGroup);
-		scene = new Scene(root, WIDTH, HEIGHT);
+        infoGroup.setTranslateX(MAP_WIDTH * Display.size);
+		Group root = new Group(infoGroup);
+		Scene scene = new Scene(root, WIDTH, HEIGHT);
 		
 		// create i/o
-		display = new Display(root, 30, 20);
+        Display.loadImages();
+		display = new Display(root, MAP_WIDTH, MAP_HEIGHT);
 
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 		scene.addEventFilter(MouseEvent.MOUSE_MOVED, this::sceneHovered);
-
-		// temporary reset button
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, this::keyboardPress);
 
 		// create map and vars
@@ -62,7 +75,7 @@ public class GUIMain extends Application {
 		// show application
 		primaryStage.setScene(scene);
 		primaryStage.setResizable(false);
-		primaryStage.setTitle("\"Sample Text Here\" Game");
+		primaryStage.setTitle("");
 		primaryStage.show();
 	}
 
@@ -73,9 +86,9 @@ public class GUIMain extends Application {
 
 	/** Generates a new map and resets variables. */
 	private void reset() {
-		map = new Map(20, 30);
+        map = new Map(MAP_HEIGHT, MAP_WIDTH);
 		map.nextFloor();
-		selectedPosition = null;
+		selected = null;
 		possibleMoves = new HashSet<>();
 
 		// display once
@@ -89,56 +102,48 @@ public class GUIMain extends Application {
 	private void keyboardPress(KeyEvent event) {
 		if (animating) return;
 		
-		Position toMove = null;
+		// optional movement
+		int dx = 0, dy = 0;
+		
 		switch (event.getCode()) {
 			case SPACE: // end player turn
 				endTurn();
 				break;
 				
-			case BACK_SPACE: // debug
-				reset();
+			case BACK_SPACE: // reset button
+				animating = true;
+				display.fadeToBlack(event2 -> {
+					reset();
+					animating = false;
+				});
 				break;
 				
 			case TAB: // select next player
-				List<Player> players = map.getPlayers();
-				for (int last = ++selectHint + players.size(); selectHint < last; selectHint++) {
-					Player player = players.get(selectHint % players.size());
-					if (player.getSTM() > 0) {
-						selectedPosition = player.getPOS();
-						redrawMap();
-						break;
-					}
-				}
+                List<Player> players = map.getPlayers();
+                for (int i = 0; i < players.size(); i++) {
+                    int index = ++selectHint % players.size();
+                    Player player = players.get(index);
+                    if (player.getSTM() > 0) {
+                        selected = player.getPOS();
+                        redrawMap();
+                        break;
+                    }
+                }
 				break;
-				
-			case A: case LEFT: // movement
-				if (selectedPosition != null) {
-					toMove = selectedPosition.moved(0, -1);
-				}
-				break;
-			case S: case DOWN:
-				if (selectedPosition != null) {
-					toMove = selectedPosition.moved(1, 0);
-				}
-				break;
-			case D: case RIGHT:
-				if (selectedPosition != null) {
-					toMove = selectedPosition.moved(0, 1);
-				}
-				break;
-			case W: case UP:
-				if (selectedPosition != null) {
-					toMove = selectedPosition.moved(-1, 0);
-				}
-				break;
+			
+			// movement
+			case A: case LEFT: dy = -1; break;
+			case S: case DOWN: dx = 1; break;
+			case D: case RIGHT: dy = 1; break;
+			case W: case UP: dx = -1; break;
 		}
 		
 		// movement key pressed
-		if (toMove != null) {
-			Position start = selectedPosition;
-			selectedPosition = toMove;
-			if (!playerTurn(start, toMove)) {
-				selectedPosition = start;
+		if (selected != null && (dx != 0 || dy != 0)) {
+			Position start = selected;
+			selected = selected.moved(dx, dy);
+			if (!playerTurn(start, selected)) {
+				selected = start;
 			}
 		}
 	}
@@ -149,6 +154,12 @@ public class GUIMain extends Application {
 	 */
 	private void sceneClicked(MouseEvent event) {
 		if (animating) return;
+		
+		// right click ends turn
+		if (event.getButton() == MouseButton.SECONDARY) {
+			endTurn();
+			return;
+		}
 		
 		// convert coordinates to account for drawing
 		int x = (int) (event.getSceneX() / Display.size);
@@ -168,22 +179,22 @@ public class GUIMain extends Application {
 			}
 
 			// first click
-			if (selectedPosition == null) {
-				selectedPosition = pos;
+			if (selected == null) {
+				selected = pos;
 				redrawMap();
 			}
 			// second click: try performing action
 			else {
-				if (map.getPlayers().stream()
-						.anyMatch(player -> player.getPOS().equals(pos))) {
-					selectedPosition = pos.equals(selectedPosition) ? null : pos;
+				if (map.getPlayers().stream().map(Player::getPOS)
+						.anyMatch(pos::equals)) {
+					selected = pos.equals(selected) ? null : pos;
 					redrawMap();
 				}
 				else {
-					Position start = selectedPosition;
-					selectedPosition = pos;
+					Position start = selected;
+					selected = pos;
 					if (!playerTurn(start, pos)) {
-						selectedPosition = null;
+						selected = null;
 						redrawMap();
 					}
 				}
@@ -199,11 +210,12 @@ public class GUIMain extends Application {
 		
 		boolean nextFloor = map.getGrid()[end.x][end.y] instanceof Stairs;
 		
-		Turn playerTurn = map.processAction(start, end);
-		if (playerTurn != null) {
+		// ask map to process
+		Turn turn = map.processAction(start, end);
+		if (turn != null) {
 			animating = true;
 			
-			display.animateTurn(playerTurn, event -> {
+			display.animateTurn(turn, event -> {
 				// special case: fade to black
 				if (nextFloor) {
 					display.fadeToBlack(event2 -> {
@@ -218,12 +230,12 @@ public class GUIMain extends Application {
 			});
 		}
 		
-		return playerTurn != null;
+		return turn != null;
 	}
 	
 	/** Ends the player turn and animates enemy turns. */
 	private void endTurn() {
-		selectedPosition = null;
+		selected = null;
 		redrawMap();
 		
 		animating = true;
@@ -233,20 +245,20 @@ public class GUIMain extends Application {
 		});
 	}
 	
-	/** Runs possible move calculations and asks Display to redraw the map. */
+	/** Checks possible moves and asks Display to redraw the map. */
 	private void redrawMap() {
 		// position selected
-		if (selectedPosition != null) {
-			possibleMoves = map.possibleMovesForCharacter(selectedPosition);
+		if (selected != null) {
+			possibleMoves = map.possibleMovesForCharacter(selected);
 			
 			// no moves available, deselect position
 			if (possibleMoves.isEmpty()) {
-				selectedPosition = null;
+				selected = null;
 				display.drawInfoOnScene(map, infoGroup, null);
 			}
 			else {
-				Entity selected = map.getGrid()[selectedPosition.x][selectedPosition.y];
-				display.drawInfoOnScene(map, infoGroup, selected);
+				Entity entity = map.getGrid()[selected.x][selected.y];
+				display.drawInfoOnScene(map, infoGroup, entity);
 			}
 		}
 		else {
