@@ -1,7 +1,6 @@
 package Text;
 
 import Model.*;
-import javafx.geometry.Pos;
 
 import java.util.Set;
 
