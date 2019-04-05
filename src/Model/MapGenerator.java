@@ -581,7 +581,7 @@ public final class MapGenerator {
         // special case: boss room
         if (!(map[0][0] instanceof Obstacle)) {
             // place STRONK enemy
-            Enemy boss = Enemy.randomEnemy(floor * 2);
+            Enemy boss = Enemy.randomEnemy(floor + 4);
             boss.setSPD(5);
             boss.setPOS(new Position(4, map[0].length/2));
             map[4][map[0].length/2] = boss;

@@ -66,9 +66,9 @@ public class Player extends Entity {
 			this.setHP((this.getmaxHP()/ (this.getLVL()-1)) * this.getLVL());
 			this.setATK((this.getATK()/ (this.getLVL() -1)) * this.getLVL());
 			this.setDEF((this.getDEF()/ (this.getLVL() - 1)) * this.getLVL());
-			this.setmaxHP((this.getHP()/ (this.getLVL()-1)) * this.getLVL());
+			this.setmaxHP((this.getmaxHP()/ (this.getLVL()-1)) * this.getLVL());
 			this.LVLlimit = this.getLVL() * 150;
-			System.out.println("Level up! You are now level " + this.getLVL() + ".");
+			Map.logMessage("Level up! You are now level " + this.getLVL() + ".");
 		}
 	/**
 	 * Attack an enemy, dealing damage to HP depending on the player's 
@@ -79,13 +79,13 @@ public class Player extends Entity {
 		double ATK = this.getATK();
 		double damage = (ATK * 10)/(e.getDEF() + 5);
 		e.setHP(e.getHP() - damage);
-		if((e.getHP() - damage) < 0) {
+		Map.logMessage("Dealt " + (int) damage + " damage!");
+		if (e.getHP() < 0) {
+			Map.logMessage("The enemy was defeated!");
 			int EXPgained = rand.nextInt(21) + 30;
 			this.addEXP(EXPgained);
 			Map.logMessage("Player gained " + EXPgained + " experience points!");
 		}
-		Map.logMessage("Dealt " + (int) damage + " damage!");
-	
 	}
 	
 	/**
@@ -95,8 +95,8 @@ public class Player extends Entity {
 	 */
 	@Override
 	public Entity copy() {
-		Player Player = new Player(getHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), EXP, LVLlimit, STM, "Placeholder");
-		Player.setmaxHP(getHP());
+		Player Player = new Player(getmaxHP(), getATK(), getDEF(), getSPD(), getPOS(), getLVL(), EXP, LVLlimit, STM, "Placeholder");
+		Player.setHP(getHP());
 		Player.setSTM(getSTM());
 		return Player;
 	}

@@ -1,16 +1,18 @@
 package GUI;
 
 import Model.*;
+import Model.Map;
 
 import javafx.animation.*;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
@@ -18,8 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Class for displaying Maps as JavaFX.
@@ -28,26 +29,34 @@ public class Display {
 	/** The length of all displayed Images. */
 	public static double size = 32d;
 	
-	//environment (walls, floors, et cetera)
-	private static Image tower_floor, dungeon_floor, cave_floor,
-			wall, cave_wall,
-			space, highlight, shade, upstairs,
-			downstairs_dungeon, downstairs_cave;
+	// image assets
+	private static Image
+			//environment (walls, floors, et cetera)
+			tower_floor, dungeon_floor, cave_floor,
+			wall, cave_wall, space, highlight, shade,
+			upstairs, downstairs_dungeon, downstairs_cave,
 	
-	//entities (players, enemies)
-	private static Image red_slime, orange_slime, yellow_slime;
-	private static Image green_slime, cyan_slime, blue_slime;
-	private static Image purple_slime, rainbow_slime;
-	private static Image white_slime, black_slime;
+			//entities (players, enemies)
+			red_slime, orange_slime, yellow_slime,
+			green_slime, cyan_slime, blue_slime,
+			purple_slime, rainbow_slime,
+			white_slime, black_slime,
+			hero;
 	
-	private static Image hero;
-	
-	private static Font pixelFont;
+	private static Font pixelFont, infoFont;
 	
 	// screen objects
 	private Group root;
 	private ImageView[][] floors, entities, shades;
 	private Rectangle[][] highlights, covers;
+	
+	// info bar objects
+	private VBox statusDisplay, logBox;
+	private ImageView portrait;
+	private Rectangle hpBar;
+	private Text floorText, nameText, hpText, lvlText, atkText, defText, spdText;
+	private Deque<String> backlog = new ArrayDeque<>();
+	private boolean logAnimating = false;
 	
 	/**
 	 * Initializes a new Display object.
@@ -57,6 +66,8 @@ public class Display {
 	 */
 	Display(Group root, int width, int height) {
 		this.root = root;
+		
+		Map.logHandler = this::handleLog;
 		
 		floors = new ImageView[width][height];
 		entities = new ImageView[width][height];
@@ -86,6 +97,62 @@ public class Display {
 				root.getChildren().addAll(children);
 			}
 		}
+		
+		// info bar objects
+		floorText = new Text();
+		portrait = new ImageView();
+		portrait.setFitWidth(size * 2);
+		portrait.setFitHeight(size * 2);
+		hpBar = new Rectangle(0, 8, Color.RED);
+		hpBar.setArcWidth(8);
+		hpBar.setArcHeight(8);
+		nameText = new Text();
+		hpText = new Text();
+		lvlText = new Text();
+		atkText = new Text();
+		defText = new Text();
+		spdText = new Text();
+		
+		// apply styles to labels
+		for (Text label : new Text[] {
+				floorText, nameText, hpText, lvlText, atkText, defText, spdText
+		}) {
+			label.setFont(infoFont);
+			label.setFill(Color.WHITE);
+			label.setWrappingWidth(260);
+		}
+		floorText.setFont(pixelFont);
+		hpText.setWrappingWidth(0);
+		
+		// layout objects
+		Rectangle hpBarBack = new Rectangle(260, 8, Color.DARKRED);
+		hpBarBack.setArcWidth(8);
+		hpBarBack.setArcHeight(8);
+		StackPane hpStack = new StackPane(hpBarBack, hpBar, hpText);
+		hpStack.setAlignment(Pos.CENTER);
+		
+		VBox labelBox = new VBox(8,
+				nameText, hpStack, lvlText, atkText, defText, spdText);
+		labelBox.setMaxWidth(260);
+		labelBox.setTranslateX(10);
+		
+		statusDisplay = new VBox(12, portrait, labelBox);
+		statusDisplay.setAlignment(Pos.CENTER);
+		statusDisplay.setOpacity(0);
+		
+		logBox = new VBox(12);
+		logBox.setFillWidth(true);
+		logBox.setMaxWidth(280);
+		logBox.setMinWidth(280);
+		
+		VBox barBox = new VBox(30, floorText, statusDisplay, logBox);
+		barBox.setAlignment(Pos.CENTER);
+		barBox.setTranslateX(10);
+		barBox.setTranslateY(20);
+		
+		Group infoGroup = new Group(barBox);
+		infoGroup.setTranslateX(width * size);
+		root.getChildren().add(infoGroup);
 	}
 	
 	/** Creates a new ImageView with the specified image. */
@@ -108,15 +175,15 @@ public class Display {
 	
 	/**
 	 * Draw the map on the screen.
-	 * @param m is a Map that gets drawn.
+	 * @param map is a Map that gets drawn.
 	 * @param highlighted is a set of positions used to draw the move overlay.
 	 */
-	public void drawMapOnScene(Map m, Set<Position> highlighted) {
-		Entity[][] grid = m.getGrid();
-		double[][] visibility = m.getVisibility();
+	public void drawMapOnScene(Map map, Set<Position> highlighted) {
+		Entity[][] grid = map.getGrid();
+		double[][] visibility = map.getVisibility();
 		
-		for (int x = 0; x < m.getHeight(); x++) {
-			for (int y = 0; y < m.getWidth(); y++) {
+		for (int x = 0; x < map.getHeight(); x++) {
+			for (int y = 0; y < map.getWidth(); y++) {
 				Entity e = grid[y][x];
 				Image newImage = null;
 				
@@ -126,36 +193,30 @@ public class Display {
 				}
 				
 				// update floors
-				if (m.getType() == Map.Type.CAVE) {
-					floors[x][y].setImage(cave_floor);
-				}
-				else if (m.getType() == Map.Type.TOWER) {
-					floors[x][y].setImage(tower_floor);
-				}
-				else {
-					floors[x][y].setImage(dungeon_floor);
+				switch (map.getType()) {
+					case TOWER: floors[x][y].setImage(tower_floor); break;
+					case CAVE: floors[x][y].setImage(cave_floor); break;
+					case DUNGEON: floors[x][y].setImage(dungeon_floor); break;
 				}
 				
 				// process entity
 				if (e instanceof Obstacle) {
-					if (y < m.getWidth() - 1 && grid[y+1][x] instanceof Obstacle) {
+					if (y < map.getWidth() - 1 && grid[y+1][x] instanceof Obstacle) {
 						newImage = space;
 					}
 					else {
-						if (m.getType() == Map.Type.CAVE) {
-							newImage = cave_wall;
-						}
-						else {
-							newImage = wall;
+						switch (map.getType()) {
+							case TOWER: newImage = wall; break;
+							case CAVE: newImage = cave_wall; break;
+							case DUNGEON: newImage = wall; break;
 						}
 					}
 				}
 				else if (e instanceof Stairs) {
-					if (m.getType() == Map.Type.CAVE) {
-						floors[x][y].setImage(downstairs_cave);
-					}
-					else {
-						floors[x][y].setImage(downstairs_dungeon);
+					switch (map.getType()) {
+						case TOWER: floors[x][y].setImage(downstairs_dungeon); break;
+						case CAVE: floors[x][y].setImage(downstairs_cave); break;
+						case DUNGEON: floors[x][y].setImage(downstairs_dungeon); break;
 					}
 				}
 				else if (e instanceof Enemy) {
@@ -178,6 +239,9 @@ public class Display {
 				fadeNodeOpacity(covers[x][y], opacity, 0.2);
 			}
 		}
+		
+		// update text
+		floorText.setText("Floor " + map.getFloor() + ": " + map.getType());
 	}
 	
 	/**
@@ -352,78 +416,97 @@ public class Display {
 		}
 	}
 	
+	/** Asynchronous animation handler for Map logs. */
+	private void handleLog(String log) {
+		if (log != null) {
+			backlog.addFirst(log);
+		}
+		
+		if (!logAnimating && !backlog.isEmpty()) {
+			logAnimating = true;
+			
+			// create new label
+			Text text = new Text(backlog.removeLast());
+			text.setWrappingWidth(280);
+			text.setLineSpacing(4);
+			text.setFont(infoFont);
+			text.setFill(Color.WHITE);
+			text.setOpacity(0);
+			ObservableList<Node> nodes = logBox.getChildren();
+			nodes.add(0, text);
+			if (nodes.size() > 20) {
+				nodes.remove(20, nodes.size() - 1);
+			}
+			
+			// animate down
+			double height = text.getBoundsInParent().getHeight() + 12;
+			logBox.setTranslateY(-height);
+			TranslateTransition fall = new TranslateTransition();
+			fall.setDuration(Duration.seconds(0.2));
+			fall.setNode(logBox);
+			fall.setToY(0);
+			
+			// build animations
+			ParallelTransition parallel = new ParallelTransition(fall);
+			PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+			pause.setOnFinished(event -> {
+				logAnimating = false;
+				handleLog(null);
+			});
+			
+			// add fade animations
+			for (int i = 0; i < nodes.size(); i++) {
+				FadeTransition fade = new FadeTransition();
+				fade.setDuration(Duration.seconds(0.2));
+				fade.setNode(nodes.get(i));
+				fade.setToValue(4.0 / (i + 2) - 0.2);
+				parallel.getChildren().add(fade);
+			}
+			
+			parallel.play();
+			pause.play();
+		}
+	}
+	
 	/**
 	 * Draws the info box on the screen.
-	 * @param m The Map associated with the Display.
-	 * @param info The Group to draw to.
+	 * @param map The Map associated with the Display.
 	 * @param ent The Entity to display information for.
 	 */
-	public void drawInfoOnScene(Map m, Group info, Entity ent) {
-		ImageView portrait = new ImageView();
-		Image picture;
-		Label name;
-		Label hp;
-		Label lvl;
-		Label atk;
-		Label def;
-		Label spd;
-		int children = info.getChildren().size();
-
-		if (children > 0){
-			info.getChildren().remove(0,1);
+	public void drawInfoOnScene(Map map, Entity ent) {
+		// no entity to display info for
+		if (ent == null) {
+			fadeNodeOpacity(statusDisplay, 0, 0.3);
+			return;
 		}
-
-		if (ent != null){
-			hp = new Label("HP: " + (int) Math.ceil(ent.getHP()));
-			lvl = new Label("LVL: " + ent.getLVL());
-			atk = new Label("ATK: " + (int) Math.ceil(ent.getATK()));
-			def = new Label("DEF: " + (int) Math.ceil(ent.getDEF()));
-			spd = new Label("SPD: " + ent.getSPD());
-		}
-		else {
-			hp = new Label();
-			lvl = new Label();
-			atk = new Label();
-			def = new Label();
-			spd = new Label();
-		}
+		
+		fadeNodeOpacity(statusDisplay, 1, 0.3);
+		
 		if (ent instanceof Obstacle) {
-			picture = wall;
-			name = new Label("Wall");
+			portrait.setImage(wall);
+			nameText.setText("Wall");
 		}
 		else if (ent instanceof Stairs) {
-			picture = upstairs;
-			name = new Label("Portal");
+			portrait.setImage(upstairs);
+			nameText.setText("Portal");
 		}
 		else if (ent instanceof Enemy) {
-			picture = green_slime;
-			name = new Label("Green Slime");
+			portrait.setImage(green_slime);
+			nameText.setText("Green Slime");
 		}
 		else if (ent instanceof Player) {
-			picture = hero;
-			name = new Label("Generic Shifty-eyed Hero");
+			portrait.setImage(hero);
+			nameText.setText("Generic Shifty-eyed Hero");
 		}
-		else {
-			picture = null;
-			name = new Label();
-		}
-
-		portrait.setImage(picture);
-
-		HBox topbox = new HBox();
-		VBox overviewbox = new VBox();
-		HBox statbox = new HBox();
-		VBox atkdef = new VBox();
-		VBox lvlspd = new VBox();
-
-		atkdef.getChildren().addAll(atk,def);
-		lvlspd.getChildren().addAll(lvl,spd);
-		statbox.getChildren().addAll(lvlspd,atkdef);
-		overviewbox.getChildren().addAll(name,hp,statbox);
-		topbox.getChildren().addAll(portrait,overviewbox);
-
-		info.getChildren().add(topbox);
-
+		
+		int hp = (int) Math.ceil(ent.getHP());
+		int maxHP = (int) Math.ceil(ent.getmaxHP());
+		hpBar.setWidth(260.0 * hp / maxHP);
+		hpText.setText("HP: " + hp + "/" + maxHP);
+		lvlText.setText("LVL: " + ent.getLVL());
+		atkText.setText("ATK: " + (int) Math.ceil(ent.getATK()));
+		defText.setText("DEF: " + (int) Math.ceil(ent.getDEF()));
+		spdText.setText("SPD: " + ent.getSPD());
 	}
 	
 	/** Attempts to load GUI images. */
@@ -457,11 +540,9 @@ public class Display {
 		
 		hero = asset("player1.png");
 		
-		pixelFont = Font.loadFont("file:src/GUI/assets/fonts/pixelmix.ttf", 18);
-		if (pixelFont == null) {
-			System.out.println("Unable to load custom fonts. Defaulting to system font.");
-			pixelFont = new Font(18);
-		}
+		
+		pixelFont = GUI.assets.fonts.Fonts.boldPixel(18);
+		infoFont = GUI.assets.fonts.Fonts.pixel(14);
 	}
 	
 	/**

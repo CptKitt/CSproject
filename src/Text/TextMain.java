@@ -20,6 +20,9 @@ public class TextMain {
 	public static void main(String[] args) {
 		//Instantiates the floor level for the game
 		map.nextFloor();
+		
+		//Direct Map logs to the output
+		Map.logHandler = System.out::println;
 
 		//Loop is used to maintain the game flow as long as the User wants or if the game is completed
 		while (true) {

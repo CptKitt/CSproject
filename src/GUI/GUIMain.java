@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -23,11 +24,9 @@ public class GUIMain extends Application {
 	private Map map;
 	/** I/O object responsible for displaying the map. */
 	private Display display;
-	/** Group in which the Display draws the sidebar. */
-	private Group infoGroup;
 
 	/** The Map-coordinate Position over which the user is hovering. */
-	private Position hoverPosition = Position.ORIGIN;
+	private Position hover = Position.ORIGIN;
 	/** The Position that the user has selected. May be null. */
 	private Position selected;
 	/** Positions that the selected Player can move to. May be null. */
@@ -43,22 +42,19 @@ public class GUIMain extends Application {
 	/** The grid height of the Map. */
 	private static final int MAP_HEIGHT = 20;
 
-	/** The width of the application. */
-	public static final double WIDTH = MAP_WIDTH * Display.size + 300;
-	/** The height of the application. */
-	public static final double HEIGHT = MAP_HEIGHT * Display.size;
-
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-	    double yScale = Screen.getPrimary().getVisualBounds()
-                .getHeight() / (MAP_HEIGHT * 16);
-	    Display.size = 16 * (int) yScale;
+		// adjust display size based on screen dimensions
+		double sWidth = Screen.getPrimary().getVisualBounds().getWidth();
+		double xScale = (sWidth - 300) / (MAP_WIDTH * 16);
+	    Display.size = 16 * (int) xScale;
+	    double width = MAP_WIDTH * Display.size + 300;
+	    double height = MAP_HEIGHT * Display.size;
 	    
 		// javafx setup
-		infoGroup = new Group();
-        infoGroup.setTranslateX(MAP_WIDTH * Display.size);
-		Group root = new Group(infoGroup);
-		Scene scene = new Scene(root, WIDTH, HEIGHT);
+		Group root = new Group();
+		Scene scene = new Scene(root, width, height);
+		scene.setFill(Color.BLACK);
 		
 		// create i/o
         Display.loadImages();
@@ -86,6 +82,14 @@ public class GUIMain extends Application {
 
 	/** Generates a new map and resets variables. */
 	private void reset() {
+		// control messages
+		Map.logMessage("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+		Map.logMessage("Mouse controls:\nClick to select\n" +
+				"Right-click to end turn");
+		Map.logMessage("Keyboard controls:\nTAB to select Player\n" +
+				"WASD to move\nSPACEBAR to end turn");
+		
+		// reset variables
         map = new Map(MAP_HEIGHT, MAP_WIDTH);
 		map.nextFloor();
 		selected = null;
@@ -254,18 +258,28 @@ public class GUIMain extends Application {
 			// no moves available, deselect position
 			if (possibleMoves.isEmpty()) {
 				selected = null;
-				display.drawInfoOnScene(map, infoGroup, null);
+				hover = null;
 			}
 			else {
-				Entity entity = map.getGrid()[selected.x][selected.y];
-				display.drawInfoOnScene(map, infoGroup, entity);
+				hover = selected;
 			}
 		}
 		else {
 			possibleMoves.clear();
 		}
 		
+		redrawInfo();
 		display.drawMapOnScene(map, possibleMoves);
+	}
+	
+	private void redrawInfo() {
+		// check if hovered position is visible
+		if (hover == null || map.getVisibility()[hover.x][hover.y] < 0.1) {
+			display.drawInfoOnScene(map, null);
+		}
+		else {
+			display.drawInfoOnScene(map, map.getGrid()[hover.x][hover.y]);
+		}
 	}
 
 	/**
@@ -284,21 +298,10 @@ public class GUIMain extends Application {
 		}
 
 		// no significant movement
-		if (pos != null && pos.equals(hoverPosition)) {
+		if ((pos != null && pos.equals(hover)) || pos == hover) {
 			return;
 		}
-		hoverPosition = pos;
-
-		Entity entity;
-
-		// check if hovered position is visible
-		if (pos == null || map.getVisibility()[pos.x][pos.y] < 0.1) {
-			entity = null;
-		}
-		else {
-			entity = map.getGrid()[pos.x][pos.y];
-		}
-		
-		display.drawInfoOnScene(map, infoGroup, entity);
+		hover = pos;
+		redrawInfo();
 	}
 }

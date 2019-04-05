@@ -1,6 +1,7 @@
 package Model;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -89,6 +90,9 @@ public final class Map implements Pathfinding.Delegate {
 		return new ArrayList<>(log);
 	}
 	
+	/** The method to call when messages are logged by Map. */
+	static public Consumer<String> logHandler;
+	
 	/**
 	 * Adds a message to the log list.
 	 * Although this method is not privacy-secure,
@@ -104,8 +108,10 @@ public final class Map implements Pathfinding.Delegate {
 		
 		log.addFirst(message);
 		
-		// TODO: remove debug
-		System.out.println(message);
+		// inform handler
+		if (logHandler != null) {
+			logHandler.accept(message);
+		}
 	}
 	
 	// Public API
@@ -332,6 +338,7 @@ public final class Map implements Pathfinding.Delegate {
 			// refresh map
 			turn.end = p2;
 			turn.pathfind(this);
+			logMessage("Advanced to floor " + (floor + 1) + ".");
 			nextFloor();
 			return turn;
 		}
@@ -355,15 +362,14 @@ public final class Map implements Pathfinding.Delegate {
 			// ask player to attack enemy
 			Enemy enemy = (Enemy) entity2;
 			turn.attackPos = enemy.getPOS();
-			turn.damage = (int) Math.ceil(enemy.getHP());
+			double startHP = enemy.getHP();
 			player.attack(enemy);
-			turn.damage -= (int) Math.ceil(enemy.getHP());
+			turn.damage = (int) (startHP - enemy.getHP());
 			
 			// killed enemy, remove
 			if (enemy.getHP() <= 0) {
 				enemies.remove(enemy);
 				entities[p2.x][p2.y] = null;
-				logMessage("You defeated the enemy!");
 			}
 		}
 		else {
@@ -464,15 +470,19 @@ public final class Map implements Pathfinding.Delegate {
 				// attack player
 				Player player = (Player) entities[p2.x][p2.y];
 				turn.attackPos = player.getPOS();
-				turn.damage = (int) Math.ceil(player.getHP());
+				double startHP = player.getHP();
 				enemy.attack(player);
-				turn.damage -= (int) Math.ceil(player.getHP());
+				turn.damage = (int) (startHP - player.getHP());
 				
-				// game over (?)
+				// rip player
 				if (player.getHP() <= 0) {
 					players.remove(player);
 					entities[p2.x][p2.y] = null;
 					logMessage("A character has died.");
+				}
+				
+				if (players.isEmpty()) {
+					logMessage("Game over!");
 				}
 			}
 			else {
