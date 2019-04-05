@@ -28,28 +28,28 @@ import java.util.*;
 public class Display {
 	/** The length of all displayed Images. */
 	public static double size = 32d;
-	
+
 	// image assets
 	private static Image
 			//environment (walls, floors, et cetera)
 			tower_floor, dungeon_floor, cave_floor,
 			wall, cave_wall, space, highlight, shade,
-			upstairs, downstairs_dungeon, downstairs_cave,
-	
+			upstairs, downstairs_dungeon, downstairs_cave, downstairs_tower,
+
 			//entities (players, enemies)
 			red_slime, orange_slime, yellow_slime,
 			green_slime, cyan_slime, blue_slime,
 			purple_slime, rainbow_slime,
 			white_slime, black_slime,
 			hero;
-	
+
 	private static Font pixelFont, infoFont;
-	
+
 	// screen objects
 	private Group root;
 	private ImageView[][] floors, entities, shades;
 	private Rectangle[][] highlights, covers;
-	
+
 	// info bar objects
 	private VBox statusDisplay, logBox;
 	private ImageView portrait;
@@ -57,7 +57,7 @@ public class Display {
 	private Text floorText, nameText, hpText, lvlText, atkText, defText, spdText;
 	private Deque<String> backlog = new ArrayDeque<>();
 	private boolean logAnimating = false;
-	
+
 	/**
 	 * Initializes a new Display object.
 	 * @param root The root Group of the Scene.
@@ -66,18 +66,18 @@ public class Display {
 	 */
 	Display(Group root, int width, int height) {
 		this.root = root;
-		
+
 		Map.logHandler = this::handleLog;
-		
+
 		floors = new ImageView[width][height];
 		entities = new ImageView[width][height];
 		highlights = new Rectangle[width][height];
 		shades = new ImageView[width][height];
 		covers = new Rectangle[width][height];
-		
+
 		Color highlightColor = Color.valueOf("#02ff06")
 				.deriveColor(0, 1, 1, 0.5);
-		
+
 		// initialize views
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -88,7 +88,7 @@ public class Display {
 				covers[x][y] = defaultRectangle(Color.BLACK, x, y);
 			}
 		}
-		
+
 		// layer views
 		for (Node[][] nodes : new Node[][][] {
 				floors, highlights, entities, shades, covers
@@ -97,7 +97,7 @@ public class Display {
 				root.getChildren().addAll(children);
 			}
 		}
-		
+
 		// info bar objects
 		floorText = new Text();
 		portrait = new ImageView();
@@ -112,7 +112,7 @@ public class Display {
 		atkText = new Text();
 		defText = new Text();
 		spdText = new Text();
-		
+
 		// apply styles to labels
 		for (Text label : new Text[] {
 				floorText, nameText, hpText, lvlText, atkText, defText, spdText
@@ -123,38 +123,38 @@ public class Display {
 		}
 		floorText.setFont(pixelFont);
 		hpText.setWrappingWidth(0);
-		
+
 		// layout objects
 		Rectangle hpBarBack = new Rectangle(260, 8, Color.DARKRED);
 		hpBarBack.setArcWidth(8);
 		hpBarBack.setArcHeight(8);
 		StackPane hpStack = new StackPane(hpBarBack, hpBar, hpText);
 		hpStack.setAlignment(Pos.CENTER);
-		
+
 		VBox labelBox = new VBox(8,
 				nameText, hpStack, lvlText, atkText, defText, spdText);
 		labelBox.setMaxWidth(260);
 		labelBox.setTranslateX(10);
-		
+
 		statusDisplay = new VBox(12, portrait, labelBox);
 		statusDisplay.setAlignment(Pos.CENTER);
 		statusDisplay.setOpacity(0);
-		
+
 		logBox = new VBox(12);
 		logBox.setFillWidth(true);
 		logBox.setMaxWidth(280);
 		logBox.setMinWidth(280);
-		
+
 		VBox barBox = new VBox(30, floorText, statusDisplay, logBox);
 		barBox.setAlignment(Pos.CENTER);
 		barBox.setTranslateX(10);
 		barBox.setTranslateY(20);
-		
+
 		Group infoGroup = new Group(barBox);
 		infoGroup.setTranslateX(width * size);
 		root.getChildren().add(infoGroup);
 	}
-	
+
 	/** Creates a new ImageView with the specified image. */
 	private ImageView defaultImageView(Image image, int x, int y) {
 		ImageView iv = new ImageView(image);
@@ -164,7 +164,7 @@ public class Display {
 		iv.setFitHeight(size);
 		return iv;
 	}
-	
+
 	/** Creates a new Rectangle of the specified color. */
 	private Rectangle defaultRectangle(Color color, int x, int y) {
 		Rectangle rect = new Rectangle(size, size, color);
@@ -172,7 +172,7 @@ public class Display {
 		rect.setTranslateY(y * size);
 		return rect;
 	}
-	
+
 	/**
 	 * Draw the map on the screen.
 	 * @param map is a Map that gets drawn.
@@ -181,24 +181,24 @@ public class Display {
 	public void drawMapOnScene(Map map, Set<Position> highlighted) {
 		Entity[][] grid = map.getGrid();
 		double[][] visibility = map.getVisibility();
-		
+
 		for (int x = 0; x < map.getHeight(); x++) {
 			for (int y = 0; y < map.getWidth(); y++) {
 				Entity e = grid[y][x];
 				Image newImage = null;
-				
+
 				// reset
 				if (!(e instanceof Player)) {
 					entities[x][y].setOpacity(1);
 				}
-				
+
 				// update floors
 				switch (map.getType()) {
 					case TOWER: floors[x][y].setImage(tower_floor); break;
 					case CAVE: floors[x][y].setImage(cave_floor); break;
 					case DUNGEON: floors[x][y].setImage(dungeon_floor); break;
 				}
-				
+
 				// process entity
 				if (e instanceof Obstacle) {
 					if (y < map.getWidth() - 1 && grid[y+1][x] instanceof Obstacle) {
@@ -214,7 +214,7 @@ public class Display {
 				}
 				else if (e instanceof Stairs) {
 					switch (map.getType()) {
-						case TOWER: floors[x][y].setImage(downstairs_dungeon); break;
+						case TOWER: floors[x][y].setImage(downstairs_tower); break;
 						case CAVE: floors[x][y].setImage(downstairs_cave); break;
 						case DUNGEON: floors[x][y].setImage(downstairs_dungeon); break;
 					}
@@ -229,21 +229,21 @@ public class Display {
 					fadeNodeOpacity(entities[x][y], opacity, 0.2);
 				}
 				entities[x][y].setImage(newImage);
-				
+
 				// fade animations for highlights and shadows
 				double newOpacity = highlighted.contains(new Position(y, x)) ? 1 : 0;
 				fadeNodeOpacity(highlights[x][y], newOpacity, 0.2);
-				
+
 				double opacity = 1 - visibility[y][x];
 				fadeNodeOpacity(shades[x][y], opacity, 0.2);
 				fadeNodeOpacity(covers[x][y], opacity, 0.2);
 			}
 		}
-		
+
 		// update text
 		floorText.setText("Floor " + map.getFloor() + ": " + map.getType());
 	}
-	
+
 	/**
 	 * Animates a node's opacity to a different value.
 	 * @param node The node to fade.
@@ -257,7 +257,7 @@ public class Display {
 			fade.play();
 		}
 	}
-	
+
 	/**
 	 * Fades the screen to black.
 	 * @param handler The handler to execute on completion.
@@ -275,7 +275,7 @@ public class Display {
 		pause.setOnFinished(handler);
 		pause.play();
 	}
-	
+
 	/**
 	 * Creates an animation from a Turn.
 	 * @param turn The Turn to read information from.
@@ -286,13 +286,13 @@ public class Display {
 		SequentialTransition st = new SequentialTransition();
 		Position start = new Position(turn.start.y, turn.start.x);
 		Position end = new Position(turn.end.y, turn.end.x);
-		
+
 		if (!turn.start.equals(turn.end)) {
 			List<Position> positions = turn.path;
 			positions.add(turn.end);
-			
+
 			// start position
-			
+
 			Path path = new Path(new MoveTo(
 					start.x * size + size / 2,
 					start.y * size + size / 2));
@@ -301,12 +301,12 @@ public class Display {
 				path.getElements().add(new LineTo(
 						p.y * size + size / 2, p.x * size + size / 2));
 			}
-			
+
 			// get properties
 			ImageView iv = entities[start.x][start.y];
 			ImageView iv2 = entities[end.x][end.y];
 			double duration = Math.sqrt(positions.size() / 40.0) - 0.1;
-			
+
 			PathTransition pt = new PathTransition(Duration.seconds(duration), path, iv);
 			pt.setInterpolator(Interpolator.EASE_BOTH);
 			// replace images on finish
@@ -316,10 +316,10 @@ public class Display {
 				iv.setTranslateX(start.x * size);
 				iv.setTranslateY(start.y * size);
 			});
-			
+
 			st.getChildren().add(pt);
 		}
-		
+
 		// additional attack animation using end position
 		if (turn.attackPos != null) {
 			// movement
@@ -333,7 +333,7 @@ public class Display {
 							end.y * size + size/2)
 			), iv1);
 			path.setInterpolator(Interpolator.EASE_OUT);
-			
+
 			// enemy shake
 			ImageView iv2 = entities[turn.attackPos.y][turn.attackPos.x];
 			PathTransition shake = new PathTransition(Duration.seconds(0.2), new Path(
@@ -344,9 +344,9 @@ public class Display {
 					new HLineTo(turn.attackPos.y * size + size/2)
 			), iv2);
 			shake.setInterpolator(Interpolator.EASE_OUT);
-			
+
 			ParallelTransition parallel = new ParallelTransition(path, shake);
-			
+
 			// floating text on finish
 			parallel.setOnFinished(event -> {
 				Text damage = new Text("" + turn.damage);
@@ -356,28 +356,28 @@ public class Display {
 				damage.setTranslateX(turn.attackPos.y * size + size/2 - halfWidth);
 				damage.setTranslateY(turn.attackPos.x * size + size/2);
 				root.getChildren().add(damage);
-				
+
 				FadeTransition fade = new FadeTransition(Duration.seconds(2), damage);
 				fade.setToValue(0);
 				fade.setOnFinished(event2 -> {
 					root.getChildren().remove(damage);
 				});
 				fade.setInterpolator(Interpolator.EASE_OUT);
-				
+
 				TranslateTransition move = new TranslateTransition(Duration.seconds(2), damage);
 				move.setToY(turn.attackPos.x * size - size);
 				move.setInterpolator(Interpolator.EASE_OUT);
-				
+
 				ParallelTransition parallel2 = new ParallelTransition(fade, move);
 				parallel2.play();
 			});
-			
+
 			st.getChildren().add(parallel);
 		}
-		
+
 		return st;
 	}
-	
+
 	/**
 	 * Animates a Turn.
 	 * @param turn The Turn to animate.
@@ -388,7 +388,7 @@ public class Display {
 		anim.setOnFinished(handler);
 		anim.play();
 	}
-	
+
 	/**
 	 * Animates a number of turns in parallel.
 	 * @param turns The Turns to animate.
@@ -398,7 +398,7 @@ public class Display {
 		if (turns.isEmpty()) {
 			handler.handle(null);
 		}
-		
+
 		// delay turns by a bit
 		Animation[] anims = turns.stream()
 				.map(this::animationForTurn).toArray(Animation[]::new);
@@ -415,16 +415,16 @@ public class Display {
 			st.play();
 		}
 	}
-	
+
 	/** Asynchronous animation handler for Map logs. */
 	private void handleLog(String log) {
 		if (log != null) {
 			backlog.addFirst(log);
 		}
-		
+
 		if (!logAnimating && !backlog.isEmpty()) {
 			logAnimating = true;
-			
+
 			// create new label
 			Text text = new Text(backlog.removeLast());
 			text.setWrappingWidth(280);
@@ -437,7 +437,7 @@ public class Display {
 			if (nodes.size() > 20) {
 				nodes.remove(20, nodes.size() - 1);
 			}
-			
+
 			// animate down
 			double height = text.getBoundsInParent().getHeight() + 12;
 			logBox.setTranslateY(-height);
@@ -445,7 +445,7 @@ public class Display {
 			fall.setDuration(Duration.seconds(0.2));
 			fall.setNode(logBox);
 			fall.setToY(0);
-			
+
 			// build animations
 			ParallelTransition parallel = new ParallelTransition(fall);
 			PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
@@ -453,7 +453,7 @@ public class Display {
 				logAnimating = false;
 				handleLog(null);
 			});
-			
+
 			// add fade animations
 			for (int i = 0; i < nodes.size(); i++) {
 				FadeTransition fade = new FadeTransition();
@@ -462,12 +462,12 @@ public class Display {
 				fade.setToValue(4.0 / (i + 2) - 0.2);
 				parallel.getChildren().add(fade);
 			}
-			
+
 			parallel.play();
 			pause.play();
 		}
 	}
-	
+
 	/**
 	 * Draws the info box on the screen.
 	 * @param map The Map associated with the Display.
@@ -479,9 +479,9 @@ public class Display {
 			fadeNodeOpacity(statusDisplay, 0, 0.3);
 			return;
 		}
-		
+
 		fadeNodeOpacity(statusDisplay, 1, 0.3);
-		
+
 		if (ent instanceof Obstacle) {
 			portrait.setImage(wall);
 			nameText.setText("Wall");
@@ -498,7 +498,7 @@ public class Display {
 			portrait.setImage(hero);
 			nameText.setText("Generic Shifty-eyed Hero");
 		}
-		
+
 		int hp = (int) Math.ceil(ent.getHP());
 		int maxHP = (int) Math.ceil(ent.getmaxHP());
 		hpBar.setWidth(260.0 * hp / maxHP);
@@ -508,13 +508,13 @@ public class Display {
 		defText.setText("DEF: " + (int) Math.ceil(ent.getDEF()));
 		spdText.setText("SPD: " + ent.getSPD());
 	}
-	
+
 	/** Attempts to load GUI images. */
 	public static void loadImages() {
 		String env = "environment/";
 		String over = "overlays/";
 		String slime = "slimes/";
-		
+
 		tower_floor = asset(env + "tile3.png");
 		dungeon_floor = asset(env + "tile1.png");
 		cave_floor = asset(env + "tile2.png");
@@ -526,7 +526,8 @@ public class Display {
 		upstairs = asset(env + "stairs_up.png");
 		downstairs_dungeon = asset(env + "stairs_down_dungeon.png");
 		downstairs_cave = asset(env + "stairs_down_cave.png");
-		
+		downstairs_tower = asset(env + "stairs_down_tower.png");
+
 		red_slime = asset(slime + "red_slime.png");
 		orange_slime = asset(slime + "orange_slime.png");
 		yellow_slime = asset(slime + "yellow_slime.png");
@@ -537,14 +538,14 @@ public class Display {
 		rainbow_slime = asset(slime + "rainbow_slime.png");
 		white_slime = asset(slime + "white_slime.png");
 		black_slime = asset(slime + "black_slime.png");
-		
+
 		hero = asset("player1.png");
-		
-		
+
+
 		pixelFont = GUI.assets.fonts.Fonts.boldPixel(18);
 		infoFont = GUI.assets.fonts.Fonts.pixel(14);
 	}
-	
+
 	/**
 	 * Image loading function that crashes if the asset is not found.
 	 * @param name The name of the asset, with extension.
