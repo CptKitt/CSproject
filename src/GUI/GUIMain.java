@@ -2,15 +2,18 @@ package GUI;
 
 import Model.*;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +66,7 @@ public class GUIMain extends Application {
 		// set up event handlers
 		scene.addEventFilter(MouseEvent.MOUSE_PRESSED, this::sceneClicked);
 		scene.addEventFilter(MouseEvent.MOUSE_MOVED, this::sceneHovered);
+		scene.addEventFilter(ScrollEvent.SCROLL, this::sceneScrolled);
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, this::keyboardPress);
 
 		// create map and vars
@@ -122,17 +126,8 @@ public class GUIMain extends Application {
 				});
 				break;
 				
-			case TAB: // select next player
-                List<Player> players = map.getPlayers();
-                for (int i = 0; i < players.size(); i++) {
-                    int index = ++selectHint % players.size();
-                    Player player = players.get(index);
-                    if (player.getSTM() > 0) {
-                        selected = player.getPOS();
-                        redrawMap();
-                        break;
-                    }
-                }
+			case TAB:
+                selectNextPlayer();
 				break;
 			
 			// movement
@@ -143,7 +138,7 @@ public class GUIMain extends Application {
 		}
 		
 		// movement key pressed
-		if (selected != null && (dx != 0 || dy != 0)) {
+		if (selected != null && (dx | dy) != 0) {
 			Position start = selected;
 			selected = selected.moved(dx, dy);
 			if (!playerTurn(start, selected)) {
@@ -303,5 +298,38 @@ public class GUIMain extends Application {
 		}
 		hover = pos;
 		redrawInfo();
+	}
+	
+	/**
+	 * Event handler for scrolling on the screen.
+	 * @param event The ScrollEvent to process.
+	 */
+	private void sceneScrolled(ScrollEvent event) {
+		if (animating) return;
+		
+		// delay selection
+		if (selectNextPlayer()) {
+			animating = true;
+			PauseTransition pause = new PauseTransition(Duration.seconds(0.2));
+			pause.setOnFinished(e -> animating = false);
+			pause.play();
+		}
+	}
+	
+	/** Attempts to select the next available player. */
+	private boolean selectNextPlayer() {
+		List<Player> players = map.getPlayers();
+		for (int i = 0; i < players.size(); i++) {
+			int index = ++selectHint % players.size();
+			Player player = players.get(index);
+			if (player.getSTM() > 0) {
+				// player found with remaining stamina
+				selected = player.getPOS();
+				redrawMap();
+				return true;
+			}
+		}
+		// no available players, give up
+		return false;
 	}
 }
